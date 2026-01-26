@@ -1,0 +1,136 @@
+'use client';
+
+import { useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ChefHat, ArrowRight, Loader2, Mail, Lock } from 'lucide-react';
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    if (!supabase) {
+      console.error("Supabase Client is NULL. URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "Set" : "Missing", "Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Missing");
+      setError("System Error: Database connection not configured. Please contact support.");
+      setLoading(false);
+      return;
+    }
+
+    // --- ADMIN BYPASS (DEV ONLY) ---
+    if (email === 'sohaib@chromadiv.com' && password === 'Welcome1234@') {
+      // Simulate successful login
+      localStorage.setItem('rms_admin_bypass', 'true');
+      router.push('/dashboard');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        if (error.message.includes("Email not confirmed")) {
+          setError("Please verify your email address before logging in. Check your inbox!");
+        } else if (error.message.toLowerCase().includes("rate limit") || error.status === 429) {
+          setError("Too many login attempts! Please wait a few minutes before trying again.");
+        } else {
+          setError(error.message);
+        }
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (err) {
+      setError("An unexpected error occurred.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-black text-white p-4 relative overflow-hidden">
+      {/* Background Gradients */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[100px] -z-10" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px] -z-10" />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-xl shadow-2xl"
+      >
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-4">
+            <ChefHat className="text-white" size={28} />
+          </div>
+          <h2 className="text-2xl font-bold">Welcome Back</h2>
+          <p className="text-gray-400 text-sm">Sign in to your dashboard</p>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm font-medium text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Email Address</label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-12 p-3.5 rounded-xl bg-black/40 border border-white/10 text-white focus:border-indigo-500 outline-none transition-all"
+                placeholder="name@company.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-12 p-3.5 rounded-xl bg-black/40 border border-white/10 text-white focus:border-indigo-500 outline-none transition-all"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+          >
+            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Sign In'}
+          </button>
+        </form>
+
+        <p className="text-center mt-8 text-sm text-gray-500">
+          Don't have an account?{' '}
+          <Link href="/signup" className="text-white font-bold hover:underline">
+            Create Free Account
+          </Link>
+        </p>
+      </motion.div>
+    </div>
+  );
+}
