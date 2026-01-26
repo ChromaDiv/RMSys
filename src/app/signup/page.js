@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ChefHat, Loader2, Mail, Lock, User } from 'lucide-react';
+import { Loader2, Mail, Lock, User } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -75,7 +75,9 @@ export default function SignupPage() {
       >
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/20 mb-4">
-            <ChefHat className="text-white" size={28} />
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
           <h2 className="text-2xl font-bold">Join RMSys</h2>
           <p className="text-gray-400 text-sm">Create your enterprise account</p>

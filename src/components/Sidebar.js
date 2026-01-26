@@ -48,7 +48,11 @@ const Sidebar = () => {
   // Interaction Lock to prevent accidental re-expansion after clicking
   const [isLocked, setIsLocked] = useState(false);
 
-  if (['/', '/login', '/signup'].includes(pathname)) return null;
+  // Normalize pathname to handle trailing slashes or case sensitivity
+  const normalizedPath = pathname?.toLowerCase().replace(/\/$/, '') || '/';
+  const isPublicHeader = ['/', '/login', '/signup'].includes(normalizedPath);
+
+  if (isPublicHeader) return null;
 
   const handleMouseEnter = () => {
     if (!isLocked) setIsHovered(true);
@@ -189,18 +193,18 @@ const Sidebar = () => {
         </button>
       </div>
 
-      {/* Desktop Sidebar Overlay Backdrop */}
-      <AnimatePresence>
+      {/* Desktop Sidebar Overlay Backdrop - REMOVED to prevent blur on dashboard */}
+      {/* <AnimatePresence>
         {isSidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden md:block"
-            onClick={() => setIsHovered(false)} // Optional: click to close if needed
+            onClick={() => setIsHovered(false)}
           />
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
 
       {/* Desktop Sidebar */}
       <motion.aside

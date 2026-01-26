@@ -10,7 +10,9 @@ export default function MainContentWrapper({ children }) {
   const { isCollapsed } = useSidebar();
   const pathname = usePathname();
 
-  const isPublic = ['/', '/login', '/signup'].includes(pathname);
+  // Normalize pathname to handle trailing slashes or case sensitivity
+  const normalizedPath = pathname?.toLowerCase().replace(/\/$/, '') || '/';
+  const isPublic = ['/', '/login', '/signup'].includes(normalizedPath);
 
   if (isPublic) {
     return <main className="flex-1 min-h-screen bg-white dark:bg-black">{children}</main>;
