@@ -85,8 +85,8 @@ export default function AIInsightsPage() {
             </span>
           </div>
 
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-[350px] w-full min-w-0 relative">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={forecastData}>
                 <defs>
                   <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">

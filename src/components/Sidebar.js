@@ -29,6 +29,13 @@ const Sidebar = () => {
     fetchUser();
   }, []);
 
+  // Safety: Reset hover state if mouse leaves the window
+  useEffect(() => {
+    const handleWindowMouseLeave = () => setIsHovered(false);
+    window.addEventListener('mouseleave', handleWindowMouseLeave);
+    return () => window.removeEventListener('mouseleave', handleWindowMouseLeave);
+  }, []);
+
   // Auto-close sidebar on route change (Mobile & Desktop Reset)
   useEffect(() => {
     setIsMobileMenuOpen(false);

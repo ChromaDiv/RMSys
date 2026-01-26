@@ -263,8 +263,8 @@ export default function Dashboard() {
               <option>This Month</option>
             </select>
           </div>
-          <div className="w-full h-[250px] md:h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="w-full h-[250px] md:h-[300px] min-w-0 relative">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={graphData}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
