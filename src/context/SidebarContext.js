@@ -7,13 +7,6 @@ const SidebarContext = createContext();
 export function SidebarProvider({ children }) {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
-  // Optional: Persist state
-  useEffect(() => {
-    const savedState = localStorage.getItem('sidebarCollapsed');
-    if (savedState) {
-      setIsCollapsed(JSON.parse(savedState));
-    }
-  }, []);
 
   const toggleSidebar = () => {
     setIsCollapsed(prev => {
