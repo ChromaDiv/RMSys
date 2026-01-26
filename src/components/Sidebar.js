@@ -29,6 +29,12 @@ const Sidebar = () => {
     fetchUser();
   }, []);
 
+  // Auto-close sidebar on route change (Mobile & Desktop Reset)
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsHovered(false);
+  }, [pathname]);
+
   // Sidebar is open if strictly expanded (pinned) OR hovered OR mobile menu is active
   const isSidebarOpen = !isCollapsed || isHovered || isMobileMenuOpen;
 

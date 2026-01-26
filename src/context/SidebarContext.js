@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const SidebarContext = createContext();
 
 export function SidebarProvider({ children }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   // Optional: Persist state
   useEffect(() => {
