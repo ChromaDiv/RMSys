@@ -40,7 +40,14 @@ export default function SignupPage() {
         }),
       });
 
-      const data = await res.json();
+      let data;
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Signup Syntax Response:', text);
+        throw new Error(`Server Error (${res.status}): ${text.slice(0, 50)}...`);
+      }
 
       if (!res.ok) {
         throw new Error(data.message || 'Something went wrong');
