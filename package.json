@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "npx prisma generate && next build",
-    "start": "next start -H 0.0.0.0",
+    "start": "node .next/standalone/server.js",
     "postinstall": "npx prisma generate"
   },
   "dependencies": {
