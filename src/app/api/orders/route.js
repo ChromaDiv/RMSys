@@ -34,7 +34,7 @@ export async function POST(request) {
         userId: session.user.id,
         customer: body.customer,
         phone: body.phone || '',
-        items: Array.isArray(body.items) ? body.items.join(', ') : (body.items || ''),
+        items: body.items,
         total: Number(body.total),
         status: body.status || "Preparing",
       }
