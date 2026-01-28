@@ -19,32 +19,41 @@ export const authOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+        try {
+          console.log("Authorize called for:", credentials?.email);
+          if (!credentials?.email || !credentials?.password) {
+            console.log("Missing credentials");
+            throw new Error("Invalid credentials");
+          }
+
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email }
+          });
+
+          if (!user || !user.password) {
+            console.log("User not found or no password");
+            throw new Error("Invalid credentials");
+          }
+
+          const isCorrectPassword = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isCorrectPassword) {
+            console.log("Wrong password");
+            throw new Error("Invalid credentials");
+          }
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          };
+        } catch (error) {
+          console.error("AUTHORIZE ERROR:", error);
+          return null;
         }
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
-
-        if (!user || !user.password) {
-          throw new Error("Invalid credentials");
-        }
-
-        const isCorrectPassword = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isCorrectPassword) {
-          throw new Error("Invalid credentials");
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        };
       }
     })
   ],
