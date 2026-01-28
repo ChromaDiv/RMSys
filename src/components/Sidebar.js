@@ -8,14 +8,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSidebar } from '@/context/SidebarContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
-import { supabase } from '@/lib/supabaseClient';
+import { useSession, signOut } from 'next-auth/react';
 import clsx from 'clsx';
-
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const Sidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session } = useSession(); // Get session
   const { isDemo, setDemo } = useDemo();
   const [isHovered, setIsHovered] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -23,22 +23,13 @@ const Sidebar = () => {
   const { t } = useLanguage();
   const [userName, setUserName] = useState('Sohaib Latif');
 
-  const { isScrolled } = useScrollAnimation(); // Global Scroll Animation Hook
-
-  // ... (rest of effects)
+  const { isScrolled } = useScrollAnimation();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!supabase) return;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Use metadata name if available, else email username, else default
-        const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Sohaib Latif';
-        setUserName(name);
-      }
-    };
-    fetchUser();
-  }, []);
+    if (session?.user) {
+      setUserName(session.user.name || session.user.email?.split('@')[0] || 'Sohaib Latif');
+    }
+  }, [session]);
 
   // Safety: Reset hover state if mouse leaves the window
   useEffect(() => {
@@ -78,8 +69,7 @@ const Sidebar = () => {
       setDemo(false);
       router.push('/');
     } else {
-      await supabase.auth.signOut();
-      router.push('/');
+      signOut({ callbackUrl: '/' });
     }
   };
 

@@ -1,119 +1,173 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { prisma } from '@/lib/db';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 export async function GET() {
-  if (!supabase) return NextResponse.json({ success: false, error: 'Supabase not configured' });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-  const { data, error } = await supabase
-    .from('menu')
-    .select('*')
-    .order('name', { ascending: true });
-
-  if (error) return NextResponse.json({ success: false, error: error.message });
-
-  // Define category sequence to match "how it was"
-  const categoryOrder = [
-    'Exciting Deals',
-    'Pizza, Sandwiches, & More',
-    'Signature Cold Coffee',
-    'Signature Hot Coffee',
-    'Ice Cream Shakes & Mojito',
-    'Hot Coffee',
-    'Cold Coffee',
-    'Teas & Desserts',
-    'Raw Coffee (Beans)'
-  ];
-
-  // Transform flat list to hierarchical structure
-  const groupedMenu = data.reduce((acc, item) => {
-    let category = acc.find(c => c.name === item.category);
-    if (!category) {
-      category = { id: `cat_${item.category.toLowerCase().replace(/\s+/g, '_')}`, name: item.category, items: [] };
-      acc.push(category);
-    }
-    category.items.push({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      description: item.description,
-      available: item.available
+    // 1. Fetch Categories
+    const categories = await prisma.category.findMany({
+      where: { userId: session.user.id },
+      orderBy: { name: 'asc' }
     });
-    return acc;
-  }, []);
 
-  // Sort groups by the defined sequence
-  groupedMenu.sort((a, b) => {
-    const indexA = categoryOrder.indexOf(a.name);
-    const indexB = categoryOrder.indexOf(b.name);
-    if (indexA === -1 && indexB === -1) return 0;
-    if (indexA === -1) return 1;
-    if (indexB === -1) return -1;
-    return indexA - indexB;
-  });
+    // 2. Fetch Menu Items
+    const items = await prisma.menu.findMany({
+      where: { userId: session.user.id },
+      orderBy: { name: 'asc' },
+    });
 
-  return NextResponse.json({ success: true, data: groupedMenu });
+    // 3. Define category sequence (Global defaults if category name matches)
+    const categoryOrder = [
+      'Exciting Deals',
+      'Pizza, Sandwiches, & More',
+      'Signature Cold Coffee',
+      'Signature Hot Coffee',
+      'Ice Cream Shakes & Mojito',
+      'Hot Coffee',
+      'Cold Coffee',
+      'Teas & Desserts',
+      'Raw Coffee (Beans)'
+    ];
+
+    // 4. Build hierarchical structure starting from Categories
+    const groupedMenu = categories.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      items: items
+        .filter(item => item.category === cat.name)
+        .map(item => ({
+          id: item.id,
+          name: item.name,
+          price: Number(item.price),
+          description: item.description,
+          available: item.available
+        }))
+    }));
+
+    // 5. Add any "unclaimed" categories (items that have a category name not in our Categories table)
+    // This handles legacy data or items added before we had the Categories table
+    const categoryNames = categories.map(c => c.name);
+    items.forEach(item => {
+      if (!categoryNames.includes(item.category)) {
+        let existing = groupedMenu.find(c => c.name === item.category);
+        if (!existing) {
+          existing = {
+            id: `cat_legacy_${item.category.toLowerCase().replace(/\s+/g, '_')}`,
+            name: item.category,
+            items: []
+          };
+          groupedMenu.push(existing);
+          categoryNames.push(item.category);
+        }
+        existing.items.push({
+          id: item.id,
+          name: item.name,
+          price: Number(item.price),
+          description: item.description,
+          available: item.available
+        });
+      }
+    });
+
+    // 6. Sort groups
+    groupedMenu.sort((a, b) => {
+      const indexA = categoryOrder.indexOf(a.name);
+      const indexB = categoryOrder.indexOf(b.name);
+      if (indexA === -1 && indexB === -1) return a.name.localeCompare(b.name);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+
+    return NextResponse.json({ success: true, data: groupedMenu });
+  } catch (error) {
+    console.error('Menu GET Error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
 }
 
 export async function POST(request) {
-  if (!supabase) return NextResponse.json({ success: false, error: 'Supabase not configured' });
-
+  console.log('--- MENU POST REQUEST ---');
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      console.log('Menu POST: Unauthorized');
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { type, data } = body; // type: 'category' or 'item'
+    console.log('Menu POST Body:', body);
+    const { type, data } = body;
 
     if (type === 'item') {
-      const { data: newItem, error } = await supabase
-        .from('menu')
-        .insert([{
+      const newItem = await prisma.menu.create({
+        data: {
+          userId: session.user.id,
           name: data.name,
           price: Number(data.price),
           description: data.description || '',
-          category: data.categoryName || 'General' // We'll expect the category name from frontend
-        }])
-        .select();
+          category: data.categoryName || 'General',
+        }
+      });
 
-      if (error) return NextResponse.json({ success: false, error: error.message });
-      return NextResponse.json({ success: true, message: 'Item added', data: newItem[0] });
+      return NextResponse.json({ success: true, message: 'Item added', data: newItem });
     }
 
-    // For 'category' type in a flat table, we don't necessarily need a POST unless we strictly want to manage empty categories.
-    // However, the frontend might expect a refresh.
-    return NextResponse.json({ success: true, message: 'Category structure handled via items' });
+    if (type === 'category') {
+      const newCategory = await prisma.category.create({
+        data: {
+          userId: session.user.id,
+          name: data.newName,
+        }
+      });
+      return NextResponse.json({ success: true, message: 'Category added', data: newCategory });
+    }
 
+    return NextResponse.json({ success: false, message: 'Invalid type' }, { status: 400 });
   } catch (error) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
 
 export async function PUT(request) {
-  if (!supabase) return NextResponse.json({ success: false, error: 'Supabase not configured' });
-
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
     const body = await request.json();
     const { type, data } = body;
 
     if (type === 'item') {
-      const { error } = await supabase
-        .from('menu')
-        .update({
+      await prisma.menu.update({
+        where: { id: data.id, userId: session.user.id },
+        data: {
           name: data.name,
           price: Number(data.price),
           description: data.description || '',
           available: data.available
-        })
-        .eq('id', data.id);
+        }
+      });
 
-      if (error) return NextResponse.json({ success: false, error: error.message });
       return NextResponse.json({ success: true, message: 'Item updated' });
     }
 
     if (type === 'category') {
-      const { error } = await supabase
-        .from('menu')
-        .update({ category: data.newName })
-        .eq('category', data.oldName);
+      // 1. Update the Category record
+      await prisma.category.update({
+        where: { id: data.id, userId: session.user.id },
+        data: { name: data.newName }
+      });
 
-      if (error) return NextResponse.json({ success: false, error: error.message });
+      // 2. Transitionally update items that were in this category
+      await prisma.menu.updateMany({
+        where: { category: data.oldName, userId: session.user.id },
+        data: { category: data.newName }
+      });
+
       return NextResponse.json({ success: true, message: 'Category renamed' });
     }
 
@@ -124,28 +178,34 @@ export async function PUT(request) {
 }
 
 export async function DELETE(request) {
-  if (!supabase) return NextResponse.json({ success: false, error: 'Supabase not configured' });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-  const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type');
-  const id = searchParams.get('id');
-  const categoryName = searchParams.get('categoryName');
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
+    const id = searchParams.get('id');
+    const categoryName = searchParams.get('categoryName');
 
-  if (type === 'category') {
-    const { error } = await supabase
-      .from('menu')
-      .delete()
-      .eq('category', categoryName);
+    if (type === 'category') {
+      // 1. Delete items in this category
+      await prisma.menu.deleteMany({
+        where: { category: categoryName, userId: session.user.id }
+      });
+      // 2. Delete the category record itself
+      await prisma.category.deleteMany({
+        where: { name: categoryName, userId: session.user.id }
+      });
+    } else if (type === 'item') {
+      await prisma.menu.delete({
+        where: { id: parseInt(id), userId: session.user.id }
+      });
+    }
 
-    if (error) return NextResponse.json({ success: false, error: error.message });
-  } else if (type === 'item') {
-    const { error } = await supabase
-      .from('menu')
-      .delete()
-      .eq('id', id);
-
-    if (error) return NextResponse.json({ success: false, error: error.message });
+    return NextResponse.json({ success: true, message: 'Deleted successfully' });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true, message: 'Deleted successfully' });
 }
+
+

@@ -7,16 +7,17 @@ import { useLanguage } from '@/context/LanguageContext';
 import { motion } from 'framer-motion';
 import { Moon, Sun, User, Bell, Shield, ChevronRight, LogOut, CreditCard, Lock, Mail, CreditCard as CardIcon, Settings as SettingsIcon, DollarSign, Languages } from 'lucide-react';
 import Modal from '@/components/Modal';
-import { supabase } from '@/lib/supabaseClient';
+import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
+// ...
 
 export default function SettingsPage() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const { currency, setCurrency, currencies } = useCurrency();
   const { language, setLanguage, t } = useLanguage();
-  const [activeModal, setActiveModal] = useState(null); // 'profile', 'security', 'billing'
+  const [activeModal, setActiveModal] = useState(null);
 
   const handleLogout = async () => {
     // 1. Clear Admin Bypass
@@ -24,13 +25,8 @@ export default function SettingsPage() {
       localStorage.removeItem('rms_admin_bypass');
     }
 
-    // 2. Clear Supabase Session
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
-
-    // 3. Redirect
-    router.push('/');
+    // 2. Clear Session
+    signOut({ callbackUrl: '/' });
   };
 
   const sections = [

@@ -33,14 +33,16 @@ export function LanguageProvider({ children }) {
       } else {
         // Fallback to English if missing
         let fallback = translations['en'];
+        let foundFallback = true;
         for (const fk of keys) {
           if (fallback && fallback[fk]) {
             fallback = fallback[fk];
           } else {
-            return key; // Return key if not found
+            foundFallback = false;
+            break;
           }
         }
-        return typeof fallback === 'string' ? fallback : key;
+        return foundFallback ? fallback : key;
       }
     }
     return value;

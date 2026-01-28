@@ -119,7 +119,7 @@ function OrderManagementContent() {
         };
       }
       stats[order.customer].count += 1;
-      stats[order.customer].totalSpent += (order.total || 0);
+      stats[order.customer].totalSpent += Number(order.total || 0);
       if (order.phone) stats[order.customer].phone = order.phone;
 
       const orderItemsRaw = order.items || [];
@@ -157,15 +157,18 @@ function OrderManagementContent() {
 
   const handleAddOrder = async (e) => {
     e.preventDefault();
+    const tempId = Date.now();
     const orderToAdd = {
-      id: Math.floor(Math.random() * 1000) + 200,
+      id: tempId,
       customer: newOrder.customer,
       phone: newOrder.phone,
       items: newOrder.items.split(',').map(i => i.trim()),
       total: parseFloat(newOrder.total),
       status: newOrder.status,
-      time: 'Just now'
+      time: 'Just now',
+      createdAt: new Date().toISOString()
     };
+
     setOrders([orderToAdd, ...orders]);
     setNewOrder({ customer: '', phone: '', items: '', total: '', status: 'Preparing' });
     setIsModalOpen(false);
@@ -174,15 +177,19 @@ function OrderManagementContent() {
       try {
         const res = await fetch('/api/orders', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(orderToAdd)
         });
         const data = await res.json();
         if (data.success) {
-          // Replace temp item with real one from DB
-          setOrders(prev => prev.map(o => o.id === orderToAdd.id ? data.data : o));
+          // Replace temp item with real one from DB (with correct ID and createdAt)
+          setOrders(prev => prev.map(o => o.id === tempId ? data.data : o));
+        } else {
+          console.error("Server failed to save order:", data.error);
+          alert("Failed to save order to database. It will disappear on refresh.");
         }
       } catch (e) {
-        console.error("Failed to add order", e);
+        console.error("Failed to connect to API", e);
       }
     }
   };
@@ -365,7 +372,11 @@ function OrderManagementContent() {
                         <div className="flex items-center gap-1.5 text-xs text-gray-400 font-bold mt-0.5">
                           <Clock size={12} />
                           <span>
-                            {order.time === 'Just now' ? t('dates.justNow') : (order.time === 'Unknown' ? t('dates.unknown') : order.time)}
+                            {order.time === 'Just now'
+                              ? t('dates.justNow')
+                              : (order.createdAt
+                                ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                : t('dates.unknown'))}
                           </span>
                           <span className="opacity-30">•</span>
                           <span>#{order.id}</span>

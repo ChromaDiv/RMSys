@@ -90,8 +90,8 @@ function MenuContent() {
         type: 'category',
         data: {
           newName: newCategoryName,
-          oldName: oldCategoryName, // Required for SQL update
-          id: editingId
+          oldName: oldCategoryName,
+          id: editingId // This is now the numerical ID from the DB
         }
       };
 

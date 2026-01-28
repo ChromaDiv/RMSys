@@ -96,7 +96,7 @@ export default function Dashboard() {
   const processDashboardData = (orders, inventory, suppliers) => {
     try {
       // 1. Calculate Total Revenue
-      const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+      const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
 
       // 2. Calculate Active Orders (Preparing or Ready)
       const activeOrders = orders.filter(o => ['Preparing', 'Ready'].includes(o.status)).length;

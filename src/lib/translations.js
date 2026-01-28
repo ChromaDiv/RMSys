@@ -24,6 +24,7 @@ export const translations = {
       add: 'Add',
       confirm: 'Confirm',
       search: 'Search...',
+      or: 'OR',
     },
     dashboard: {
       title: 'Dashboard',
@@ -310,6 +311,7 @@ export const translations = {
         signInButton: 'Sign In',
         noAccount: "Don't have an account?",
         createAccount: 'Create Free Account',
+        googleButton: 'Continue with Google',
       },
       signup: {
         title: 'Join RMSys',
@@ -321,6 +323,7 @@ export const translations = {
         emailPlaceholder: 'name@company.com',
         passwordPlaceholder: '••••••••',
         createButton: 'Create Account',
+        googleButton: 'Continue with Google',
         hasAccount: 'Already have an account?',
         logIn: 'Log In',
       },
@@ -330,7 +333,10 @@ export const translations = {
         rateLimit: 'Too many login attempts! Please wait a few minutes before trying again.',
         unexpected: 'An unexpected error occurred.',
         emailTaken: 'This email is already taken. Please Log In instead.',
-        accountCreated: 'Account created! Please check your email to confirm your account before logging in.',
+        accountCreated: 'Account created! Please check your email to verify your account before logging in.',
+        tokenExpired: 'Your verification link has expired. Please sign up again.',
+        invalidToken: 'Invalid verification link.',
+        emailVerified: 'Email verified successfully! You can now sign in.',
       }
     },
   },
@@ -359,6 +365,7 @@ export const translations = {
       add: 'إضافة',
       confirm: 'تأكيد',
       search: 'بحث...',
+      or: 'أو',
     },
     dashboard: {
       title: 'لوحة التحكم',
@@ -587,6 +594,7 @@ export const translations = {
         signInButton: 'تسجيل الدخول',
         noAccount: 'ليس لديك حساب؟',
         createAccount: 'إنشاء حساب مجاني',
+        googleButton: 'المتابعة باستخدام جوجل',
       },
       signup: {
         title: 'انضم إلى RMSys',
@@ -598,6 +606,7 @@ export const translations = {
         emailPlaceholder: 'name@company.com',
         passwordPlaceholder: '••••••••',
         createButton: 'إنشاء حساب',
+        googleButton: 'المتابعة باستخدام جوجل',
         hasAccount: 'لديك حساب بالفعل؟',
         logIn: 'تسجيل الدخول',
       },
@@ -608,6 +617,9 @@ export const translations = {
         unexpected: 'حدث خطأ غير متوقع.',
         emailTaken: 'هذا البريد الإلكتروني مستخدم بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.',
         accountCreated: 'تم إنشاء الحساب! يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك قبل تسجيل الدخول.',
+        tokenExpired: 'انتهت صلاحية رابط التحقق الخاص بك. يرجى التسجيل مرة أخرى.',
+        invalidToken: 'رابط التحقق غير صالح.',
+        emailVerified: 'تم التحقق من البريد الإلكتروني بنجاح! يمكنك الآن تسجيل الدخول.',
       }
     },
     data: {

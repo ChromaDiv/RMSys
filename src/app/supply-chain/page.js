@@ -37,13 +37,7 @@ const cardVariants = {
 export default function SupplyChainPage() {
   const { t } = useLanguage();
   const { isDemo } = useDemo();
-  const [inventory, setInventory] = useState([
-    { id: 1, item: t('data.items.arabicaBeans'), quantity: 15, unit: 'kg', supplier: t('data.suppliers.raaz'), status: 'Good' },
-    { id: 2, item: t('data.items.freshMilk'), quantity: 45, unit: 'L', supplier: t('data.suppliers.punjab'), status: 'Good' },
-    { id: 3, item: t('data.items.chocSyrup'), quantity: 8, unit: 'L', supplier: t('data.suppliers.sweet'), status: 'Low Risk' },
-    { id: 4, item: t('data.items.burgerBuns'), quantity: 24, unit: 'pcs', supplier: t('data.suppliers.dawn'), status: 'Critical' },
-    { id: 5, item: t('data.items.chickenFillets'), quantity: 12, unit: 'kg', supplier: t('data.suppliers.kns'), status: 'Good' },
-  ]);
+  const [inventory, setInventory] = useState([]);
   const [suppliers, setSuppliers] = useState([]); // Fetched from API
 
   const [isModalOpen, setIsModalOpen] = useState(false);
