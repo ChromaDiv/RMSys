@@ -66,12 +66,11 @@ export const authOptions = {
         session.user.id = token.id;
       }
       return session;
-    }
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-  trustHost: true,
-};
+    },
+    secret: process.env.NEXTAUTH_SECRET || "fallback-secret-debug-12345",
+    trustHost: true,
+  };
 
-const handler = NextAuth(authOptions);
+  const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+  export { handler as GET, handler as POST };
