@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useCurrency } from '@/context/CurrencyContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Send, Brain, X, MessageCircle } from 'lucide-react';
 
 export default function FloatingChat() {
+  const { formatAmount } = useCurrency();
   const [query, setQuery] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [messages, setMessages] = useState([
@@ -33,7 +35,7 @@ export default function FloatingChat() {
       setIsAnalyzing(false);
       setMessages(prev => [...prev, {
         role: 'ai',
-        text: "Based on historical trends, I recommend increasing the price of 'Special Chicken Karahi' by Rs. 200. Demand is high on weekends, so revenue should increase by approx Rs. 15,000/week."
+        text: `Based on historical trends, I recommend increasing the price of 'Special Chicken Karahi' by ${formatAmount(200)}. Demand is high on weekends, so revenue should increase by approx ${formatAmount(15000)}/week.`
       }]);
     }, 1500);
   };

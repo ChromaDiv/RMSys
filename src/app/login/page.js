@@ -4,11 +4,15 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
+import { useDemo } from '@/context/DemoContext';
 import { motion } from 'framer-motion';
 import { ArrowRight, Loader2, Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLanguage();
+  const { setDemo } = useDemo();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,9 +23,13 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
+    // Clear demo mode for authenticated users
+    setDemo(false);
+
     if (!supabase) {
       console.error("Supabase Client is NULL. URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "Set" : "Missing", "Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Missing");
-      setError("System Error: Database connection not configured. Please contact support.");
+      console.error("Supabase Client is NULL. URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "Set" : "Missing", "Key:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Missing");
+      setError(t('auth.errors.systemError'));
       setLoading(false);
       return;
     }
@@ -42,9 +50,9 @@ export default function LoginPage() {
 
       if (error) {
         if (error.message.includes("Email not confirmed")) {
-          setError("Please verify your email address before logging in. Check your inbox!");
+          setError(t('auth.errors.emailNotConfirmed'));
         } else if (error.message.toLowerCase().includes("rate limit") || error.status === 429) {
-          setError("Too many login attempts! Please wait a few minutes before trying again.");
+          setError(t('auth.errors.rateLimit'));
         } else {
           setError(error.message);
         }
@@ -52,7 +60,7 @@ export default function LoginPage() {
         router.push('/dashboard');
       }
     } catch (err) {
-      setError("An unexpected error occurred.");
+      setError(t('auth.errors.unexpected'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -76,19 +84,21 @@ export default function LoginPage() {
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold">Welcome Back</h2>
-          <p className="text-gray-400 text-sm">Sign in to your dashboard</p>
         </div>
+        <h2 className="text-2xl font-bold">{t('auth.login.title')}</h2>
+        <p className="text-gray-400 text-sm">{t('auth.login.subtitle')}</p>
 
-        {error && (
-          <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm font-medium text-center">
-            {error}
-          </div>
-        )}
+        {
+          error && (
+            <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm font-medium text-center">
+              {error}
+            </div>
+          )
+        }
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Email Address</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('auth.login.emailLabel')}</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
@@ -96,14 +106,14 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-12 p-3.5 rounded-xl bg-black/40 border border-white/10 text-white focus:border-indigo-500 outline-none transition-all"
-                placeholder="name@company.com"
+                placeholder={t('auth.login.emailPlaceholder')}
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Password</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('auth.login.passwordLabel')}</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
@@ -111,7 +121,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-12 p-3.5 rounded-xl bg-black/40 border border-white/10 text-white focus:border-indigo-500 outline-none transition-all"
-                placeholder="••••••••"
+                placeholder={t('auth.login.passwordPlaceholder')}
                 required
               />
             </div>
@@ -122,17 +132,17 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
           >
-            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Sign In'}
+            {loading ? <Loader2 size={20} className="animate-spin" /> : t('auth.login.signInButton')}
           </button>
         </form>
 
         <p className="text-center mt-8 text-sm text-gray-500">
-          Don't have an account?{' '}
+          {t('auth.login.noAccount')}{' '}
           <Link href="/signup" className="text-white font-bold hover:underline">
-            Create Free Account
+            {t('auth.login.createAccount')}
           </Link>
         </p>
-      </motion.div>
-    </div>
+      </motion.div >
+    </div >
   );
 }

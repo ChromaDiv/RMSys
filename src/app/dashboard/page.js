@@ -2,24 +2,39 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+
+import { useCurrency } from '@/context/CurrencyContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { useDemo } from '@/context/DemoContext';
+import { demoData } from '@/lib/demoData';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { TrendingUp, Users, AlertTriangle, DollarSign, Sparkles, MessageCircle, ArrowRight, ShoppingCart, Activity, Truck, LayoutDashboard } from 'lucide-react';
+import DemoSignupModal from '@/components/DemoSignupModal';
 
 export default function Dashboard() {
+  const { formatAmount } = useCurrency();
+  const { t, language } = useLanguage();
+  const { isDemo } = useDemo();
   const [stats, setStats] = useState([
-    { title: 'Total Revenue', value: 'Rs. 0', change: '+0%', icon: DollarSign, color: '#00b894' },
-    { title: 'Active Orders', value: '0', change: '0', icon: TrendingUp, color: '#6c5ce7' },
-    { title: 'New Customers', value: '0', change: '+0%', icon: Users, color: '#0984e3' },
-    { title: 'Low Stock Items', value: '0', change: '0', icon: AlertTriangle, color: '#ff7675' },
+    { title: t('dashboard.totalRevenue'), value: formatAmount(0), change: '+0%', icon: DollarSign, color: '#00b894' },
+    { title: t('dashboard.activeOrders'), value: '0', change: '0', icon: TrendingUp, color: '#6c5ce7' },
+    { title: t('dashboard.newCustomers'), value: '0', change: '+0%', icon: Users, color: '#0984e3' },
+    { title: t('dashboard.lowStockItems'), value: '0', change: '0', icon: AlertTriangle, color: '#ff7675' },
   ]);
 
   const [topItems, setTopItems] = useState([]);
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [supplyHealth, setSupplyHealth] = useState({ health: 0, lowStock: 0, activePartners: 0 });
+
+  // Raw Data State for I18n reactivity
+  const [rawOrders, setRawOrders] = useState([]);
+  const [rawInventory, setRawInventory] = useState([]);
+  const [rawSuppliers, setRawSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showDemoModal, setShowDemoModal] = useState(false);
 
   // Mock Graph Data for now (can be made dynamic later if needed)
   const [graphData] = useState([
@@ -32,8 +47,15 @@ export default function Dashboard() {
     { name: 'Sun', sales: 28000 },
   ]);
 
-  useEffect(() => {
-    async function fetchData() {
+  async function fetchData() {
+    if (isDemo) {
+      // Use static demo data
+      setRawOrders(demoData.orders);
+      setRawInventory(demoData.inventory);
+      setRawSuppliers(demoData.suppliers);
+      setLoading(false);
+    } else {
+      // Fetch real data from Supabase via API
       try {
         const [ordersRes, inventoryRes] = await Promise.all([
           fetch('/api/orders'),
@@ -44,11 +66,12 @@ export default function Dashboard() {
         const inventoryData = await inventoryRes.json();
 
         if (ordersData.success && inventoryData.success) {
-          // Fetch suppliers separately or parallel if route exists
           const suppliersRes = await fetch('/api/suppliers');
           const suppliersData = await suppliersRes.json();
 
-          processDashboardData(ordersData.data, inventoryData.data, suppliersData.success ? suppliersData.data : []);
+          setRawOrders(ordersData.data || []);
+          setRawInventory(inventoryData.data || []);
+          setRawSuppliers(suppliersData.success ? suppliersData.data : []);
         }
       } catch (error) {
         console.error("Dashboard Fetch Error", error);
@@ -56,9 +79,19 @@ export default function Dashboard() {
         setLoading(false);
       }
     }
+  }
 
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, [isDemo]);
+
+
+  // Re-process data when raw data or language changes
+  useEffect(() => {
+    if (rawOrders.length > 0 || rawInventory.length > 0) {
+      processDashboardData(rawOrders, rawInventory, rawSuppliers);
+    }
+  }, [rawOrders, rawInventory, rawSuppliers, t, formatAmount]);
 
   const processDashboardData = (orders, inventory, suppliers) => {
     try {
@@ -88,7 +121,7 @@ export default function Dashboard() {
         .sort(([, a], [, b]) => b - a)
         .slice(0, 3)
         .map(([name, count]) => ({
-          name,
+          name: name,
           sold: count.toString(),
           progress: Math.min(100, count * 10), // Arbitrary scale for progress bar
           color: ['bg-orange-500', 'bg-red-500', 'bg-yellow-500'][Math.floor(Math.random() * 3)]
@@ -97,10 +130,10 @@ export default function Dashboard() {
       setTopItems(sortedItems);
 
       setStats([
-        { title: 'Total Revenue', value: `Rs. ${totalRevenue.toLocaleString()}`, change: '+12%', icon: DollarSign, color: '#00b894' },
-        { title: 'Active Orders', value: activeOrders.toString(), change: '+5', icon: TrendingUp, color: '#6c5ce7' },
-        { title: 'Unique Customers', value: uniqueCustomers.toString(), change: '+8%', icon: Users, color: '#0984e3' },
-        { title: 'Low Stock Items', value: lowStockCount.toString(), change: lowStockCount > 0 ? '-Alert' : 'OK', icon: AlertTriangle, color: '#ff7675' },
+        { title: t('dashboard.totalRevenue'), value: formatAmount(totalRevenue), change: '+12%', icon: DollarSign, color: '#00b894' },
+        { title: t('dashboard.activeOrders'), value: activeOrders.toString(), change: '+5', icon: TrendingUp, color: '#6c5ce7' },
+        { title: t('dashboard.newCustomers'), value: uniqueCustomers.toString(), change: '+8%', icon: Users, color: '#0984e3' },
+        { title: t('dashboard.lowStockItems'), value: lowStockCount.toString(), change: lowStockCount > 0 ? '-Alert' : 'OK', icon: AlertTriangle, color: '#ff7675' },
       ]);
 
       // 6. Generate AI Suggestions
@@ -116,9 +149,9 @@ export default function Dashboard() {
         const custData = orders.find(o => o.customer === topCust);
         suggestions.push({
           type: 'outreach',
-          title: 'Customer Retention',
-          content: `**${topCust}** is a regular but hasn't ordered in 48h. Send a personalized greeting?`,
-          action: 'Whatsapp',
+          title: t('data.suggestions.retentionTitle'),
+          content: t('data.suggestions.retentionBody').replace('{name}', `<span dir="ltr" class="font-bold text-left inline-block">${topCust}</span>`),
+          action: t('dashboard.contactWhatsapp'),
           link: `https://wa.me/${custData.phone || ''}`,
           icon: Users,
           color: 'text-rose-500'
@@ -130,9 +163,11 @@ export default function Dashboard() {
       if (criticalItems.length > 0) {
         suggestions.push({
           type: 'supply',
-          title: 'Procurement Strategy',
-          content: `Stock for **${criticalItems[0].item}** is critical. Suggest negotiating bulk price with ${criticalItems[0].supplier}.`,
-          action: 'Supply Chain',
+          title: t('data.suggestions.procurementTitle'),
+          content: t('data.suggestions.procurementBody')
+            .replace('{item}', `<span dir="ltr" class="font-bold text-left inline-block">${criticalItems[0].item}</span>`)
+            .replace('{supplier}', criticalItems[0].supplier),
+          action: t('common.edit'),
           link: '/supply-chain',
           icon: ShoppingCart,
           color: 'text-amber-500'
@@ -140,9 +175,9 @@ export default function Dashboard() {
       } else {
         suggestions.push({
           type: 'supply',
-          title: 'Inventory Optimization',
-          content: `Milk consumption is up by 20%. Suggest negotiating a secondary backup with Punjab Dairy.`,
-          action: 'Reports',
+          title: t('data.suggestions.optimizationTitle'),
+          content: t('data.suggestions.optimizationBody'),
+          action: t('common.edit'),
           link: '/ai-insights',
           icon: Activity,
           color: 'text-indigo-500'
@@ -187,29 +222,31 @@ export default function Dashboard() {
     >
       {/* Header - Floating Glass Theme */}
       <motion.div
-        className="relative mb-8 px-6 py-6 md:px-10 md:py-8 rounded-[40px] bg-white/40 dark:bg-black/20 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden"
+        className="relative mb-8 px-6 py-6 md:px-10 md:py-8 rounded-3xl bg-white/70 dark:bg-black/50 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="relative z-10 flex flex-row items-center justify-between gap-6">
           <div>
             <h1 className="text-2xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-gradient-x uppercase tracking-wider">
-              Dashboard
+              {t('dashboard.title')}
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm font-medium hidden md:flex items-center gap-2">
               <LayoutDashboard size={18} className="text-indigo-500" />
-              Real-time Overview
+              {t('dashboard.subtitle')}
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden md:flex items-center gap-2 px-4 py-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-bold uppercase tracking-widest border border-indigo-500/20">
+            <span className={`hidden md:flex items-center gap-2 px-4 py-2 ${isDemo ? 'bg-indigo-500/10 text-indigo-600' : 'bg-emerald-500/10 text-emerald-600'} rounded-full text-xs font-bold uppercase tracking-widest border border-white/10`}>
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isDemo ? 'bg-indigo-400' : 'bg-emerald-400'} opacity-75`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${isDemo ? 'bg-indigo-500' : 'bg-emerald-500'}`}></span>
               </span>
-              Live System
+              {isDemo ? 'Demo Mode' : t('common.liveSystem')}
             </span>
-            <span className="text-sm font-bold text-gray-400">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+            <span className="text-sm font-bold text-gray-400">
+              {new Date().toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </span>
           </div>
         </div>
 
@@ -224,7 +261,7 @@ export default function Dashboard() {
           return (
             <motion.div
               key={index}
-              className="glass-card p-6 rounded-2xl flex items-center gap-4 relative overflow-hidden group"
+              className="glass-card p-6 rounded-3xl flex items-center gap-4 relative overflow-hidden group"
               variants={itemVariants}
               whileHover={{ y: -5 }}
             >
@@ -253,11 +290,11 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Sales Chart */}
         <motion.div
-          className="glass-card lg:col-span-2 p-6 rounded-2xl"
+          className="glass-card lg:col-span-2 p-6 rounded-3xl"
           variants={itemVariants}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">Revenue Overview</h2>
+            <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">{t('dashboard.revenueOverview')}</h2>
             <select className="bg-gray-100 dark:bg-white/5 border border-transparent dark:border-white/10 rounded-lg px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
               <option>This Week</option>
               <option>This Month</option>
@@ -265,7 +302,7 @@ export default function Dashboard() {
           </div>
           <div className="w-full h-[250px] md:h-[300px] min-w-0 relative">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <AreaChart data={graphData}>
+              <AreaChart data={graphData.map(d => ({ ...d, name: t(`dates.${d.name.toLowerCase()}`) || d.name }))}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6c5ce7" stopOpacity={0.3} />
@@ -274,8 +311,9 @@ export default function Dashboard() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                 <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `Rs.${value}`} />
+                <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatAmount(value, false)} />
                 <Tooltip
+                  formatter={(value) => [formatAmount(value), 'Sales']}
                   contentStyle={{ backgroundColor: '#1a1a1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
                 />
                 <Area type="monotone" dataKey="sales" stroke="#6c5ce7" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" />
@@ -293,7 +331,7 @@ export default function Dashboard() {
 
           <div className="flex items-center gap-2 mb-6 text-indigo-400">
             <Sparkles size={24} className="animate-pulse" />
-            <h2 className="text-xl font-bold tracking-tight">Proactive Insights</h2>
+            <h2 className="text-xl font-bold tracking-tight">{t('dashboard.proactiveInsights')}</h2>
           </div>
 
           <div className="space-y-6 flex-1">
@@ -315,15 +353,16 @@ export default function Dashboard() {
                   <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed" dangerouslySetInnerHTML={{ __html: s.content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 dark:text-white">$1</strong>') }} />
 
                   {s.type === 'outreach' ? (
-                    <a
-                      href={s.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => {
+                        if (isDemo) setShowDemoModal(true);
+                        else window.open(s.link, '_blank');
+                      }}
                       className="flex items-center justify-center gap-2 w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/20"
                     >
                       <MessageCircle size={14} fill="currentColor" />
-                      Contact via WhatsApp
-                    </a>
+                      {t('dashboard.contactWhatsapp')}
+                    </button>
                   ) : (
                     <Link
                       href={s.link}
@@ -342,7 +381,7 @@ export default function Dashboard() {
           </div>
 
           <button className="mt-6 text-xs font-bold text-gray-400 hover:text-indigo-500 transition-colors uppercase tracking-widest flex items-center justify-center gap-2">
-            Refresh Analysis
+            {t('dashboard.refreshAnalysis')}
           </button>
         </motion.div>
       </div>
@@ -356,14 +395,14 @@ export default function Dashboard() {
           <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500">
             <Activity size={24} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Strategic Supply Chain Insights</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('dashboard.supplyChainInsights')}</h2>
           <span className="text-xs font-bold px-2 py-1 bg-purple-500/10 text-purple-500 rounded-full animate-pulse">Live Dashboard</span>
         </div>
 
         <div className="glass-card p-6 rounded-[32px] grid grid-cols-1 md:grid-cols-3 gap-6 border border-white/60 dark:border-white/5">
           {/* Inventory Health */}
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 flex flex-col justify-between h-32 relative overflow-hidden group">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest z-10">Inventory Health</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest z-10">{t('dashboard.inventoryHealth')}</span>
             <div className="z-10">
               <span className="text-4xl font-black text-emerald-500">{supplyHealth.health}%</span>
               <p className="text-xs text-gray-500 font-bold mt-1">Operational Efficiency</p>
@@ -383,7 +422,7 @@ export default function Dashboard() {
 
           {/* Critical Stock */}
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 flex flex-col justify-between h-32 relative overflow-hidden group">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest z-10">Critical Alerts</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest z-10">{t('dashboard.criticalAlerts')}</span>
             <div className="z-10">
               <span className="text-4xl font-black text-rose-500">{supplyHealth.lowStock}</span>
               <p className="text-xs text-gray-500 font-bold mt-1">Items Below Threshold</p>
@@ -395,7 +434,7 @@ export default function Dashboard() {
 
           {/* Active Partners */}
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 flex flex-col justify-between h-32 relative overflow-hidden group">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest z-10">Active Network</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest z-10">{t('dashboard.activeNetwork')}</span>
             <div className="z-10">
               <span className="text-4xl font-black text-indigo-500">{supplyHealth.activePartners}</span>
               <p className="text-xs text-gray-500 font-bold mt-1">Verified Suppliers</p>
@@ -415,25 +454,46 @@ export default function Dashboard() {
           className="glass-card p-8 rounded-2xl"
           variants={itemVariants}
         >
-          <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white mb-6">Quick Actions</h2>
+          <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white mb-6">{t('dashboard.quickActions')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'New Order', icon: TrendingUp, color: 'bg-indigo-500', href: '/supply-chain?action=new-order' },
-              { label: 'Add Item', icon: DollarSign, color: 'bg-emerald-500', href: '/menu?action=add-item' },
-              { label: 'Reports', icon: AlertTriangle, color: 'bg-amber-500', href: '/ai-insights' },
-              { label: 'Settings', icon: Users, color: 'bg-gray-500', href: '/settings' },
+              { label: t('settings.quickActions.newOrder'), icon: TrendingUp, color: 'bg-indigo-500', href: '/supply-chain?action=new-order' },
+              { label: t('settings.quickActions.addItem'), icon: DollarSign, color: 'bg-emerald-500', href: '/menu?action=add-item' },
+              { label: t('settings.quickActions.reports'), icon: AlertTriangle, color: 'bg-amber-500', href: '/ai-insights' },
+              { label: t('settings.quickActions.settings'), icon: Users, color: 'bg-gray-500', href: '/settings' },
             ].map((action, i) => (
-              <Link key={i} href={action.href} className="block w-full">
-                <motion.button
-                  whileHover={{ y: -5 }}
-                  className="w-full h-full flex flex-col items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition-all group"
-                >
-                  <div className={`p-3 rounded-full text-white shadow-lg ${action.color} group-hover:scale-110 transition-transform`}>
-                    <action.icon size={20} />
-                  </div>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{action.label}</span>
-                </motion.button>
-              </Link>
+              <div key={i} className="block w-full">
+                {['/menu?action=add-item'].includes(action.href) ? (
+                  <motion.button
+                    whileHover={{ y: -5 }}
+                    onClick={() => {
+                      if (isDemo && action.href.includes('add-item')) {
+                        setShowDemoModal(true);
+                      } else {
+                        window.location.href = action.href;
+                      }
+                    }}
+                    className="w-full h-full flex flex-col items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition-all group"
+                  >
+                    <div className={`p-3 rounded-full text-white shadow-lg ${action.color} group-hover:scale-110 transition-transform`}>
+                      <action.icon size={20} />
+                    </div>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{action.label}</span>
+                  </motion.button>
+                ) : (
+                  <Link href={action.href} className="block w-full h-full">
+                    <motion.button
+                      whileHover={{ y: -5 }}
+                      className="w-full h-full flex flex-col items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-transparent hover:border-gray-200 dark:hover:border-white/10 transition-all group"
+                    >
+                      <div className={`p-3 rounded-full text-white shadow-lg ${action.color} group-hover:scale-110 transition-transform`}>
+                        <action.icon size={20} />
+                      </div>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{action.label}</span>
+                    </motion.button>
+                  </Link>
+                )}
+              </div>
             ))}
           </div>
         </motion.div>
@@ -443,23 +503,25 @@ export default function Dashboard() {
           className="glass-card p-8 rounded-2xl"
           variants={itemVariants}
         >
-          <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white mb-6">Top Selling Items</h2>
-          <div className="space-y-6">
+          <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white mb-6">{t('dashboard.topSellingItems')}</h2>
+          <div className="space-y-6" dir="ltr">
             {loading ? (
               <p className="text-gray-500">Loading top items...</p>
             ) : topItems.map((item, i) => (
-              <div key={i}>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-medium text-gray-700 dark:text-gray-200">{item.name}</span>
-                  <span className="text-gray-500 dark:text-gray-400">{item.sold} sold</span>
-                </div>
-                <div className="h-2 w-full bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${item.progress}%` }}
-                    transition={{ duration: 1, delay: i * 0.1 }}
-                    className={`h-full ${item.color} rounded-full shadow-[0_0_10px_currentColor]`}
-                  />
+              <div key={i} className="flex items-center gap-4">
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-bold text-gray-700 dark:text-gray-200 text-left" dir="ltr">{item.name}</span>
+                    <span className="text-xs font-bold text-gray-400">{item.sold} sold</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${item.progress}%` }}
+                      transition={{ duration: 1, delay: i * 0.1 }}
+                      className={`h-full ${item.color} rounded-full shadow-[0_0_10px_currentColor]`}
+                    />
+                  </div>
                 </div>
               </div>
             ))}
@@ -467,6 +529,8 @@ export default function Dashboard() {
           </div>
         </motion.div>
       </div>
+
+      <DemoSignupModal isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
     </motion.div>
   );
 }

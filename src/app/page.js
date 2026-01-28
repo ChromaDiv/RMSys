@@ -1,34 +1,84 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle, BarChart3, Truck, Users } from 'lucide-react';
+import { ArrowRight, CheckCircle, BarChart3, Truck, Users, ChevronRight } from 'lucide-react';
+import AuthModal from '@/components/AuthModal';
+import { useLanguage } from '@/context/LanguageContext';
+import { useDemo } from '@/context/DemoContext';
 
 export default function LandingPage() {
+  const { language, setLanguage, t } = useLanguage();
+  const router = useRouter();
+  const { setDemo } = useDemo();
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authView, setAuthView] = useState('login');
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'en' ? 'ar' : 'en');
+  };
+  const handleDemoClick = () => {
+    setDemo(true);
+    router.push('/dashboard');
+  };
+
+  const openAuth = (view) => {
+    setAuthView(view);
+    setAuthOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-black text-white selection:bg-indigo-500/30">
 
       {/* Navbar */}
-      <nav className="fixed top-0 w-full z-[1000] border-b border-white/10 bg-black/50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      {/* Navbar */}
+      <motion.nav
+        initial={{ width: '95%', maxWidth: '1400px', y: 20, borderRadius: 50 }}
+        animate={{
+          width: isScrolled ? '90%' : '95%',
+          maxWidth: isScrolled ? '1200px' : '1400px',
+          y: isScrolled ? 30 : 20,
+          borderRadius: 50,
+        }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+        className={`fixed z-[1000] left-0 right-0 mx-auto transition-colors duration-300 ${isScrolled ? 'bg-white/10 border border-white/20 backdrop-blur-xl shadow-2xl shadow-indigo-500/10' : 'bg-white/5 border border-white/10 backdrop-blur-md'}`}
+      >
+        <div className="w-full mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <span className="text-2xl font-bold tracking-tight">RMSys</span>
           </div>
-          <div className="flex items-center gap-6">
-            <Link href="/login" className="text-sm font-bold text-gray-400 hover:text-white transition-colors">
-              Log In
-            </Link>
-            <Link href="/signup" className="px-5 py-2.5 bg-white text-black rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors">
-              Get Started
-            </Link>
+          <div className="flex items-center gap-1.5 md:gap-6">
+            <button
+              onClick={toggleLanguage}
+              className="w-7 h-7 md:w-10 md:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] md:text-sm transition-all flex items-center justify-center border border-white/10 shrink-0"
+            >
+              {language === 'en' ? 'AR' : 'EN'}
+            </button>
+            <button onClick={() => openAuth('login')} className="text-xs md:text-sm font-bold text-gray-400 hover:text-white transition-colors px-2 shrink-0">
+              {t('landing.nav.logIn')}
+            </button>
+            <button onClick={() => openAuth('signup')} className="px-3 py-1.5 md:px-5 md:py-2.5 bg-white text-black rounded-full text-xs md:text-sm font-bold hover:bg-gray-200 transition-colors whitespace-nowrap shrink-0">
+              {t('landing.nav.getStarted')}
+            </button>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Hero Section */}
       <section className="relative pt-40 pb-20 px-6 overflow-hidden">
@@ -43,21 +93,28 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
           >
             <span className="inline-block px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-6">
-              Enterprise Restaurant OS
+              {t('landing.hero.badge')}
             </span>
             <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-tight">
-              Manage your Restaurant Like a <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Tech Company.</span>
+              {t('landing.hero.titlePart1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{t('landing.hero.titlePart2')}</span>
             </h1>
             <p className="text-xl text-gray-400 md:max-w-2xl mx-auto mb-10 leading-relaxed">
-              RMSys brings AI-powered supply chain optimization, real-time analytics, and seamless order management to modern culinary businesses.
+              {t('landing.hero.subtitle')}
             </p>
             <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-              <Link href="/signup" className="w-full md:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2">
-                Start Free Trial <ArrowRight size={20} />
-              </Link>
-              <Link href="/login" className="w-full md:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-bold text-lg transition-all">
-                View Demo
-              </Link>
+              <button
+                onClick={() => openAuth('signup')}
+                className="w-full md:w-auto px-8 py-4 bg-gradient-to-tr from-indigo-600 to-purple-600 hover:shadow-lg hover:shadow-indigo-500/30 text-white rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2"
+              >
+                {t('landing.hero.startTrial')} <ArrowRight size={20} className={language === 'ar' ? 'rotate-180' : ''} />
+              </button>
+              <button
+                onClick={handleDemoClick}
+                className="px-8 py-3.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold backdrop-blur-md transition-all flex items-center gap-2 group"
+              >
+                {t('landing.hero.viewDemo')}
+                <ChevronRight className={`w-4 h-4 transition-transform ${language === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+              </button>
             </div>
           </motion.div>
         </div>
@@ -68,20 +125,20 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           <FeatureCard
             icon={BarChart3}
-            title="Live Analytics"
-            desc="Real-time revenue tracking, sales forecasting, and peak hour analysis."
+            title={t('landing.features.analyticsTitle')}
+            desc={t('landing.features.analyticsDesc')}
             delay={0.1}
           />
           <FeatureCard
             icon={Truck}
-            title="Smart Supply Chain"
-            desc="Automated inventory alerts, supplier management, and procurement AI."
+            title={t('landing.features.supplyTitle')}
+            desc={t('landing.features.supplyDesc')}
             delay={0.2}
           />
           <FeatureCard
             icon={Users}
-            title="Customer Insights"
-            desc="Track repeat customers, retention rates, and personalized marketing opportunities."
+            title={t('landing.features.insightsTitle')}
+            desc={t('landing.features.insightsDesc')}
             delay={0.3}
           />
         </div>
@@ -93,37 +150,44 @@ export default function LandingPage() {
 
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-black mb-4">Transparent Pricing</h2>
-            <p className="text-gray-400 text-lg">Choose the perfect plan for your culinary business.</p>
+            <h2 className="text-4xl font-black mb-4">{t('landing.pricing.title')}</h2>
+            <p className="text-gray-400 text-lg">{t('landing.pricing.subtitle')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
             {/* Starter */}
             <PricingCard
-              title="Starter"
+              title={t('landing.pricing.starter.title')}
               price="$0"
-              period="/mo"
-              desc="Perfect for small cafes."
-              features={['Basic POS', 'Inventory Tracking', '5 Staff Accounts', 'Email Support']}
+              period={t('landing.pricing.month')}
+              desc={t('landing.pricing.starter.desc')}
+              features={t('landing.pricing.starter.features')}
+              buttonText={t('landing.pricing.startTrial')}
+              onAction={() => openAuth('signup')}
             />
 
             {/* Pro */}
             <PricingCard
-              title="Pro"
+              title={t('landing.pricing.pro.title')}
               price="$29"
-              period="/mo"
-              desc="For growing restaurants."
+              period={t('landing.pricing.month')}
+              desc={t('landing.pricing.pro.desc')}
               popular
-              features={['Everything in Starter', 'AI Analytics', 'Supply Chain Alerts', 'Unlimited Staff', 'WhatsApp Integration', 'Priority Support']}
+              mostPopularText={t('landing.pricing.mostPopular')}
+              features={t('landing.pricing.pro.features')}
+              buttonText={t('landing.pricing.startTrial')}
+              onAction={() => openAuth('signup')}
             />
 
             {/* Enterprise */}
             <PricingCard
-              title="Enterprise"
-              price="Custom"
+              title={t('landing.pricing.enterprise.title')}
+              price={t('landing.pricing.custom')}
               period=""
-              desc="For multi-location chains."
-              features={['Everything in Pro', 'Custom API Access', 'Dedicated Account Manager', 'SLA', 'On-premise Deployment']}
+              desc={t('landing.pricing.enterprise.desc')}
+              features={t('landing.pricing.enterprise.features')}
+              buttonText={t('landing.pricing.contactSales')}
+              onAction={() => window.open('https://wa.me/923465410115', '_blank')}
             />
           </div>
         </div>
@@ -131,8 +195,14 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="py-10 border-t border-white/5 text-center text-gray-500 text-sm">
-        <p>© 2026 RMSys Inc. All rights reserved.</p>
+        <p>{t('landing.footer')}</p>
       </footer>
+
+      <AuthModal
+        isOpen={authOpen}
+        onClose={() => setAuthOpen(false)}
+        initialView={authView}
+      />
     </div>
   );
 }
@@ -155,7 +225,7 @@ function FeatureCard({ icon: Icon, title, desc, delay }) {
   );
 }
 
-function PricingCard({ title, price, period, desc, features, popular }) {
+function PricingCard({ title, price, period, desc, features, popular, mostPopularText, buttonText, onAction }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -165,7 +235,7 @@ function PricingCard({ title, price, period, desc, features, popular }) {
     >
       {popular && (
         <div className="absolute top-0 right-0 bg-white/20 px-3 py-1 text-xs font-bold rounded-bl-xl text-white">
-          MOST POPULAR
+          {mostPopularText}
         </div>
       )}
 
@@ -186,8 +256,11 @@ function PricingCard({ title, price, period, desc, features, popular }) {
         ))}
       </ul>
 
-      <button className={`w-full py-4 rounded-xl font-bold text-sm transition-all ${popular ? 'bg-white text-indigo-600 hover:bg-gray-100' : 'bg-white/10 text-white hover:bg-white/20'}`}>
-        {price === 'Custom' ? 'Contact Sales' : 'Start Free Trial'}
+      <button
+        onClick={onAction}
+        className={`w-full py-4 rounded-xl font-bold text-sm transition-all relative z-20 cursor-pointer ${popular ? 'bg-white text-indigo-600 hover:bg-gray-100' : 'bg-white/10 text-white hover:bg-white/20'}`}
+      >
+        {buttonText}
       </button>
     </motion.div>
   );

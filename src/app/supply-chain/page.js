@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, Truck, Star, Plus, Trash2, Box, Activity, TrendingUp, AlertCircle, CheckCircle2, ChevronDown, Check, Sparkles, Minus, Edit3 } from 'lucide-react';
 import Modal from '@/components/Modal';
+import DemoSignupModal from '@/components/DemoSignupModal';
+import { useLanguage } from '@/context/LanguageContext';
+import { useDemo } from '@/context/DemoContext';
+import { demoData } from '@/lib/demoData';
 
 // Animation Variants
 const containerVariants = {
@@ -31,16 +35,19 @@ const cardVariants = {
 };
 
 export default function SupplyChainPage() {
+  const { t } = useLanguage();
+  const { isDemo } = useDemo();
   const [inventory, setInventory] = useState([
-    { id: 1, item: 'Arabica Coffee Beans', quantity: 15, unit: 'kg', supplier: 'Raaz Beans', status: 'Good' },
-    { id: 2, item: 'Fresh Milk', quantity: 45, unit: 'L', supplier: 'Punjab Dairy', status: 'Good' },
-    { id: 3, item: 'Chocolate Syrup', quantity: 8, unit: 'L', supplier: 'Sweet Supplies', status: 'Low Risk' },
-    { id: 4, item: 'Burger Buns', quantity: 24, unit: 'pcs', supplier: 'Dawn Bread', status: 'Critical' },
-    { id: 5, item: 'Chicken Fillets', quantity: 12, unit: 'kg', supplier: 'K&Ns', status: 'Good' },
+    { id: 1, item: t('data.items.arabicaBeans'), quantity: 15, unit: 'kg', supplier: t('data.suppliers.raaz'), status: 'Good' },
+    { id: 2, item: t('data.items.freshMilk'), quantity: 45, unit: 'L', supplier: t('data.suppliers.punjab'), status: 'Good' },
+    { id: 3, item: t('data.items.chocSyrup'), quantity: 8, unit: 'L', supplier: t('data.suppliers.sweet'), status: 'Low Risk' },
+    { id: 4, item: t('data.items.burgerBuns'), quantity: 24, unit: 'pcs', supplier: t('data.suppliers.dawn'), status: 'Critical' },
+    { id: 5, item: t('data.items.chickenFillets'), quantity: 12, unit: 'kg', supplier: t('data.suppliers.kns'), status: 'Good' },
   ]);
   const [suppliers, setSuppliers] = useState([]); // Fetched from API
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showDemoModal, setShowDemoModal] = useState(false);
   const [modalMode, setModalMode] = useState('item'); // 'item' or 'supplier'
   const [newItem, setNewItem] = useState({ item: '', quantity: '', unit: 'kg', supplier: '', status: 'Good', min_threshold: 15 });
   const [newSupplier, setNewSupplier] = useState({ name: '', type: '', rating: '5.0', status: 'Active' });
@@ -89,15 +96,20 @@ export default function SupplyChainPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [invRes, supRes] = await Promise.all([
-          fetch('/api/supply-chain'),
-          fetch('/api/suppliers')
-        ]);
-        const invData = await invRes.json();
-        const supData = await supRes.json();
+        if (isDemo) {
+          setInventory(demoData.inventory);
+          setSuppliers(demoData.suppliers);
+        } else {
+          const [invRes, supRes] = await Promise.all([
+            fetch('/api/supply-chain'),
+            fetch('/api/suppliers')
+          ]);
+          const invData = await invRes.json();
+          const supData = await supRes.json();
 
-        if (invData.success) setInventory(invData.data);
-        if (supData.success) setSuppliers(supData.data);
+          if (invData.success) setInventory(invData.data);
+          if (supData.success) setSuppliers(supData.data);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -105,7 +117,7 @@ export default function SupplyChainPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [isDemo]);
 
   const handleAddItem = async (e) => {
     e.preventDefault();
@@ -113,22 +125,26 @@ export default function SupplyChainPage() {
     const itemToAdd = { ...newItem, quantity: Number(newItem.quantity) };
 
     // Optimistic update
+
+
     setInventory([{ id: tempId, ...itemToAdd }, ...inventory]);
     setIsModalOpen(false);
     setNewItem({ item: '', quantity: '', unit: 'kg', supplier: '', status: 'Good' });
 
-    try {
-      const res = await fetch('/api/supply-chain', {
-        method: 'POST',
-        body: JSON.stringify(itemToAdd)
-      });
-      const data = await res.json();
-      if (data.success) {
-        // Replace temp item with real one from DB
-        setInventory(prev => prev.map(item => item.id === tempId ? data.data : item));
+    if (!isDemo) {
+      try {
+        const res = await fetch('/api/supply-chain', {
+          method: 'POST',
+          body: JSON.stringify(itemToAdd)
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Replace temp item with real one from DB
+          setInventory(prev => prev.map(item => item.id === tempId ? data.data : item));
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
     }
   };
 
@@ -148,14 +164,15 @@ export default function SupplyChainPage() {
     // Optimistic update
     setInventory(prev => prev.map(i => i.id === id ? { ...i, quantity: newQuantity, status: newStatus } : i));
 
-    try {
-      await fetch('/api/supply-chain', {
-        method: 'PUT',
-        method: 'PUT',
-        body: JSON.stringify({ id, quantity: newQuantity, status: newStatus, min_threshold: threshold })
-      });
-    } catch (e) {
-      console.error(e);
+    if (!isDemo) {
+      try {
+        await fetch('/api/supply-chain', {
+          method: 'PUT',
+          body: JSON.stringify({ id, quantity: newQuantity, status: newStatus, min_threshold: threshold })
+        });
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 
@@ -171,22 +188,26 @@ export default function SupplyChainPage() {
     setIsModalOpen(false);
     setEditingItem(null);
 
-    try {
-      await fetch('/api/supply-chain', {
-        method: 'PUT',
-        body: JSON.stringify({ id, ...updates })
-      });
-    } catch (e) {
-      console.error(e);
+    if (!isDemo) {
+      try {
+        await fetch('/api/supply-chain', {
+          method: 'PUT',
+          body: JSON.stringify({ id, ...updates })
+        });
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 
   const handleDeleteItem = async (id) => {
     setInventory(inventory.filter(item => item.id !== id));
-    try {
-      await fetch(`/api/supply-chain?id=${id}`, { method: 'DELETE' });
-    } catch (error) {
-      console.error(error);
+    if (!isDemo) {
+      try {
+        await fetch(`/api/supply-chain?id=${id}`, { method: 'DELETE' });
+      } catch (error) {
+        console.error(error);
+      }
     }
   };
 
@@ -207,18 +228,26 @@ export default function SupplyChainPage() {
   };
 
   const handleAddSupplier = async (e) => {
-    try {
-      const res = await fetch('/api/suppliers', {
-        method: 'POST',
-        body: JSON.stringify(newSupplier)
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSuppliers([...suppliers, data.data]);
-        setIsModalOpen(false);
-        setNewSupplier({ name: '', type: '', rating: '5.0', status: 'Active' });
-      }
-    } catch (e) { console.error(e); }
+    e.preventDefault();
+    if (!isDemo) {
+      try {
+        const res = await fetch('/api/suppliers', {
+          method: 'POST',
+          body: JSON.stringify(newSupplier)
+        });
+        const data = await res.json();
+        if (data.success) {
+          setSuppliers([...suppliers, data.data]);
+          setIsModalOpen(false);
+          setNewSupplier({ name: '', type: '', rating: '5.0', status: 'Active' });
+        }
+      } catch (e) { console.error(e); }
+    } else {
+      // Demo Mode
+      setSuppliers([...suppliers, { id: Date.now(), ...newSupplier }]);
+      setIsModalOpen(false);
+      setNewSupplier({ name: '', type: '', rating: '5.0', status: 'Active' });
+    }
   };
 
   const handleEditSupplier = async (e) => {
@@ -231,17 +260,21 @@ export default function SupplyChainPage() {
     setIsModalOpen(false);
     setEditingItem(null);
 
-    try {
-      await fetch('/api/suppliers', {
-        method: 'PUT',
-        body: JSON.stringify({ id, ...newSupplier })
-      });
-    } catch (e) { console.error(e); }
+    if (!isDemo) {
+      try {
+        await fetch('/api/suppliers', {
+          method: 'PUT',
+          body: JSON.stringify({ id, ...newSupplier })
+        });
+      } catch (e) { console.error(e); }
+    }
   };
 
   const handleDeleteSupplier = async (id) => {
     setSuppliers(suppliers.filter(s => s.id !== id));
-    try { await fetch(`/api/suppliers?id=${id}`, { method: 'DELETE' }); } catch (error) { console.error(error); }
+    if (!isDemo) {
+      try { await fetch(`/api/suppliers?id=${id}`, { method: 'DELETE' }); } catch (error) { console.error(error); }
+    }
   };
 
   const getStatusConfig = (status) => {
@@ -282,7 +315,7 @@ export default function SupplyChainPage() {
       {/* Page Header */}
       {/* Page Header - Floating Glass Theme */}
       <motion.div
-        className="flex flex-row items-center justify-between gap-4 px-6 py-6 md:px-10 md:py-8 rounded-full bg-white/40 dark:bg-black/20 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden relative"
+        className="flex flex-row items-center justify-between gap-4 px-6 py-6 md:px-10 md:py-8 rounded-3xl bg-white/70 dark:bg-black/50 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden relative"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
@@ -293,7 +326,7 @@ export default function SupplyChainPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            Supply Chain
+            {t('supplyChain.title')}
           </motion.h1>
           <motion.p
             className="text-gray-500 dark:text-gray-400 mt-1 text-sm font-medium hidden md:flex items-center gap-2"
@@ -302,17 +335,20 @@ export default function SupplyChainPage() {
             transition={{ delay: 0.2 }}
           >
             <Package size={18} className="text-indigo-500" />
-            Advanced inventory health and procurement intelligence.
+            {t('supplyChain.subtitle')}
           </motion.p>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => openModal('item')}
+          onClick={() => {
+            if (isDemo) setShowDemoModal(true);
+            else openModal('item');
+          }}
           className="relative z-10 flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold shadow-lg shadow-indigo-500/20 transition-all shrink-0"
         >
           <Plus size={20} />
-          <span className="hidden sm:inline">New Item</span>
+          <span className="hidden sm:inline">{t('supplyChain.newItem')}</span>
         </motion.button>
 
         {/* Decorative Blob */}
@@ -325,15 +361,15 @@ export default function SupplyChainPage() {
           <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500">
             <Activity size={24} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Strategic Insights</h2>
-          <span className="text-xs font-bold px-2 py-1 bg-purple-500/10 text-purple-500 rounded-full animate-pulse">Procurement AI</span>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('supplyChain.strategicInsights')}</h2>
+          <span className="text-xs font-bold px-2 py-1 bg-purple-500/10 text-purple-500 rounded-full animate-pulse">{t('supplyChain.procurementAI')}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Health Metrics */}
-          <div className="glass-card p-6 rounded-[32px] grid grid-cols-2 lg:grid-cols-3 gap-4 border border-white/60 dark:border-white/5">
+          <div className="glass-card p-6 rounded-3xl grid grid-cols-2 lg:grid-cols-3 gap-4 border border-white/60 dark:border-white/5">
             <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 flex flex-col justify-between">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Inventory Health</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('supplyChain.inventoryHealth')}</span>
               <div>
                 <span className="text-2xl font-black text-emerald-500">82%</span>
                 <div className="h-1.5 w-full bg-gray-200 dark:bg-white/10 rounded-full mt-1 overflow-hidden">
@@ -342,31 +378,31 @@ export default function SupplyChainPage() {
               </div>
             </div>
             <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 flex flex-col justify-between">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Low Stock Items</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('supplyChain.lowStockItems')}</span>
               <div>
                 <span className="text-2xl font-black text-rose-500">
                   {inventory.filter(i => i.status === 'Critical' || i.status === 'Low Risk').length}
                 </span>
-                <p className="text-[10px] text-gray-500 font-bold mt-1">Requires Attention</p>
+                <p className="text-[10px] text-gray-500 font-bold mt-1">{t('supplyChain.requiresAttention')}</p>
               </div>
             </div>
             <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 flex flex-col justify-between group hidden lg:flex">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Partners</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('supplyChain.activePartners')}</span>
               <div>
                 <span className="text-2xl font-black text-indigo-500">{suppliers.length}</span>
-                <p className="text-[10px] text-gray-500 font-bold mt-1">Global Network</p>
+                <p className="text-[10px] text-gray-500 font-bold mt-1">{t('supplyChain.globalNetwork')}</p>
               </div>
             </div>
           </div>
 
           {/* Smart Suggestions */}
-          <div className="glass-card p-6 rounded-[32px] border border-white/60 dark:border-white/5 relative overflow-hidden">
+          <div className="glass-card p-6 rounded-3xl border border-white/60 dark:border-white/5 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <Sparkles size={48} className="text-indigo-500" />
             </div>
             <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
               <Sparkles size={14} className="text-indigo-500" />
-              Procurement AI Suggestions
+              {t('supplyChain.procurementSuggestions')}
             </h3>
             <div className="space-y-4">
               <div className="flex gap-4 items-start">
@@ -375,7 +411,7 @@ export default function SupplyChainPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
-                    <span className="font-bold text-gray-900 dark:text-white">Bulk Buy Suggestion:</span> Coffee consumption is outpacing restock. Buying 50kg extra beans now could save <span className="text-emerald-500 font-bold">12% in shipping</span>.
+                    <span className="font-bold text-gray-900 dark:text-white">{t('data.suggestions.bulkBuy').split(':')[0]}:</span> {t('data.suggestions.bulkBuy').split(':')[1]}
                   </p>
                 </div>
               </div>
@@ -385,7 +421,7 @@ export default function SupplyChainPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
-                    <span className="font-bold text-gray-900 dark:text-white">Vendor Trust:</span> Raaz Beans has maintained a <span className="text-indigo-500 font-bold">98% on-time delivery rate</span>. Recommended for primary specialty bean sourcing.
+                    <span className="font-bold text-gray-900 dark:text-white">{t('data.suggestions.vendorTrust').split(':')[0]}:</span> {t('data.suggestions.vendorTrust').split(':')[1]}
                   </p>
                 </div>
               </div>
@@ -400,7 +436,7 @@ export default function SupplyChainPage() {
           <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-500">
             <Package size={24} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Inventory Grid</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('supplyChain.inventoryGrid')}</h2>
         </div>
 
         {/* --- NEW GRID CARD LAYOUT --- */}
@@ -453,13 +489,21 @@ export default function SupplyChainPage() {
                       {/* +/- Adjustment Buttons */}
                       <div className="flex items-center gap-2 bg-gray-100 dark:bg-white/5 p-1 rounded-full border border-gray-200 dark:border-white/10">
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item.id, -1); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isDemo) setShowDemoModal(true);
+                            else handleUpdateQuantity(item.id, -1);
+                          }}
                           className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-white dark:hover:bg-white/10 hover:text-indigo-600 transition-all"
                         >
                           <Minus size={16} />
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item.id, 1); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isDemo) setShowDemoModal(true);
+                            else handleUpdateQuantity(item.id, 1);
+                          }}
                           className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-white dark:hover:bg-white/10 hover:text-indigo-600 transition-all"
                         >
                           <Plus size={16} />
@@ -478,16 +522,24 @@ export default function SupplyChainPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isDemo) setShowDemoModal(true);
+                          else openEditModal(item);
+                        }}
                         className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors"
-                        title="Edit Item"
+                        title={t('supplyChain.editItem')}
                       >
                         <Edit3 size={16} />
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteItem(item.id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isDemo) setShowDemoModal(true);
+                          else handleDeleteItem(item.id);
+                        }}
                         className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
-                        title="Delete Item"
+                        title={t('supplyChain.deleteItem')}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -510,16 +562,19 @@ export default function SupplyChainPage() {
             <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500">
               <Truck size={24} />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Active Partners</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('supplyChain.activePartners')}</h2>
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => openModal('supplier')}
+            onClick={() => {
+              if (isDemo) setShowDemoModal(true);
+              else openModal('supplier');
+            }}
             className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full font-bold shadow-lg shadow-purple-500/20 transition-all text-sm w-full sm:w-auto"
           >
             <Plus size={16} />
-            <span>Add Partner</span>
+            <span>{t('supplyChain.addPartner')}</span>
           </motion.button>
         </div>
 
@@ -566,16 +621,24 @@ export default function SupplyChainPage() {
 
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={(e) => { e.stopPropagation(); openSupplierEditModal(s); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isDemo) setShowDemoModal(true);
+                        else openSupplierEditModal(s);
+                      }}
                       className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors"
-                      title="Edit Partner"
+                      title={t('supplyChain.editPartner')}
                     >
                       <Edit3 size={16} />
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteSupplier(s.id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isDemo) setShowDemoModal(true);
+                        else handleDeleteSupplier(s.id);
+                      }}
                       className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
-                      title="Delete Partner"
+                      title={t('supplyChain.deletePartner')}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -593,14 +656,14 @@ export default function SupplyChainPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={modalMode === 'supplier' ? "Add New Partner" : (modalMode === 'edit-supplier' ? "Edit Partner" : (modalMode === 'edit' ? "Edit Inventory Item" : "Add New Item"))}
+        title={modalMode === 'supplier' ? t('supplyChain.addPartner') : (modalMode === 'edit-supplier' ? t('supplyChain.editPartner') : (modalMode === 'edit' ? t('supplyChain.editItem') : t('supplyChain.newItem')))}
       >
         <form onSubmit={(modalMode === 'supplier' || modalMode === 'edit-supplier') ? (modalMode === 'edit-supplier' ? handleEditSupplier : handleAddSupplier) : (modalMode === 'edit' ? handleEditItem : handleAddItem)} className="space-y-6">
           {(modalMode !== 'supplier' && modalMode !== 'edit-supplier') ? (
             // ITEM FORM (Add or Edit)
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Item Name</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.itemName')}</label>
                 <input
                   value={newItem.item}
                   onChange={e => setNewItem({ ...newItem, item: e.target.value })}
@@ -611,15 +674,15 @@ export default function SupplyChainPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Quantity</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.quantity')}</label>
                   <input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: e.target.value })} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium" placeholder="0" required />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Min Amount</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.minAmount')}</label>
                   <input type="number" value={newItem.min_threshold} onChange={e => setNewItem({ ...newItem, min_threshold: e.target.value })} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium" placeholder="15" title="Alert when below this amount" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Unit</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.unit')}</label>
                   <select value={newItem.unit} onChange={e => setNewItem({ ...newItem, unit: e.target.value })} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium">
                     <option value="kg">kg</option>
                     <option value="pcs">pcs</option>
@@ -628,7 +691,7 @@ export default function SupplyChainPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Supplier</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.supplier')}</label>
                 <input value={newItem.supplier} onChange={e => setNewItem({ ...newItem, supplier: e.target.value })} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium" placeholder="Supplier Name" required />
               </div>
             </div>
@@ -636,7 +699,7 @@ export default function SupplyChainPage() {
             // SUPPLIER FORM
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Partner Name</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.partnerName')}</label>
                 <input
                   value={newSupplier.name}
                   onChange={e => setNewSupplier({ ...newSupplier, name: e.target.value })}
@@ -647,7 +710,7 @@ export default function SupplyChainPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Category</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.category')}</label>
                   <input
                     value={newSupplier.type}
                     onChange={e => setNewSupplier({ ...newSupplier, type: e.target.value })}
@@ -657,7 +720,7 @@ export default function SupplyChainPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Rating</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.rating')}</label>
                   <input
                     type="number" step="0.1" max="5"
                     value={newSupplier.rating}
@@ -668,7 +731,7 @@ export default function SupplyChainPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Status</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('common.status')}</label>
                 <div className="grid grid-cols-2 gap-2">
                   {['Active', 'Delayed'].map(status => (
                     <button
@@ -688,7 +751,7 @@ export default function SupplyChainPage() {
           )}
 
           <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-white/10">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white font-bold transition-colors">Cancel</button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 rounded-full text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white font-bold transition-colors">{t('common.cancel')}</button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -698,11 +761,13 @@ export default function SupplyChainPage() {
                 : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-indigo-500/30'
                 }`}
             >
-              {modalMode === 'supplier' ? 'Add Partner' : (modalMode === 'edit-supplier' ? 'Update Partner' : (modalMode === 'edit' ? 'Update Item' : 'Save Item'))}
+              {modalMode === 'supplier' ? t('supplyChain.addPartner') : (modalMode === 'edit-supplier' ? t('supplyChain.editPartner') : (modalMode === 'edit' ? t('supplyChain.editItem') : t('common.save')))}
             </motion.button>
           </div>
         </form>
       </Modal>
+
+      <DemoSignupModal isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
     </motion.div>
   );
 }

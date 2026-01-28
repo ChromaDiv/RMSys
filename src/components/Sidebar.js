@@ -1,20 +1,31 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Truck, ClipboardList, Settings, Sparkles, Menu, X, LogOut, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSidebar } from '@/context/SidebarContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { useDemo } from '@/context/DemoContext';
 import { supabase } from '@/lib/supabaseClient';
 import clsx from 'clsx';
 
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+
 const Sidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isDemo, setDemo } = useDemo();
   const [isHovered, setIsHovered] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isCollapsed, toggleSidebar } = useSidebar();
+  const { t } = useLanguage();
   const [userName, setUserName] = useState('Sohaib Latif');
+
+  const { isScrolled } = useScrollAnimation(); // Global Scroll Animation Hook
+
+  // ... (rest of effects)
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -62,13 +73,23 @@ const Sidebar = () => {
     setIsHovered(false);
   };
 
+  const handleExitOrLogout = async () => {
+    if (isDemo) {
+      setDemo(false);
+      router.push('/');
+    } else {
+      await supabase.auth.signOut();
+      router.push('/');
+    }
+  };
+
   const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Order Management', path: '/order-management', icon: ClipboardList },
-    { name: 'Menu', path: '/menu', icon: Menu },
-    { name: 'Supply Chain', path: '/supply-chain', icon: Truck },
-    { name: 'AI Insights', path: '/ai-insights', icon: Sparkles },
-    { name: 'Settings', path: '/settings', icon: Settings },
+    { name: t('nav.dashboard'), path: '/dashboard', icon: LayoutDashboard },
+    { name: t('nav.orderManagement'), path: '/order-management', icon: ClipboardList },
+    { name: t('nav.menu'), path: '/menu', icon: Menu },
+    { name: t('nav.supplyChain'), path: '/supply-chain', icon: Truck },
+    { name: t('nav.aiInsights'), path: '/ai-insights', icon: Sparkles },
+    { name: t('nav.settings'), path: '/settings', icon: Settings },
   ];
 
   const sidebarVariants = {
@@ -93,7 +114,7 @@ const Sidebar = () => {
               exit={{ opacity: 0, x: -10 }}
               className="text-2xl font-black whitespace-nowrap overflow-hidden tracking-tight"
             >
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-white dark:to-indigo-300">RMSys</span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-white dark:to-indigo-300">{t('common.rmsTitle')}</span>
             </motion.h1>
           )}
         </AnimatePresence>
@@ -147,7 +168,33 @@ const Sidebar = () => {
         })}
       </nav>
 
-      <div className="mt-6 pt-6 border-t border-white/10">
+      <div className="mt-auto mb-2 pt-2">
+        <AnimatePresence>
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={handleExitOrLogout}
+            className={clsx(
+              "flex items-center gap-3 rounded-full transition-all duration-300 w-full hover:bg-red-500/10 hover:text-red-500 text-red-400 font-medium group",
+              isSidebarOpen ? "px-4 py-3" : "justify-center p-3 aspect-square"
+            )}
+          >
+            <LogOut size={24} className="shrink-0 transition-transform group-hover:scale-110" />
+            {isSidebarOpen && (
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="relative z-10 font-medium whitespace-nowrap"
+              >
+                {isDemo ? t('nav.exitDemo') : t('nav.logout')}
+              </motion.span>
+            )}
+          </motion.button>
+        </AnimatePresence>
+      </div>
+
+      <div className="pt-4 border-t border-white/10">
         <div className={clsx("flex items-center gap-3 rounded-full bg-white/5 transition-all", isSidebarOpen ? "p-2" : "p-2 justify-center aspect-square mx-auto")}>
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shrink-0 uppercase">
             {userName.charAt(0)}
@@ -160,8 +207,12 @@ const Sidebar = () => {
                 exit={{ opacity: 0, width: 0 }}
                 className="flex flex-col whitespace-nowrap overflow-hidden"
               >
-                <span className="text-sm font-semibold text-gray-900 dark:text-white capitalize">{userName}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">Admin Access</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
+                  {isDemo ? 'Demo Mode' : userName}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {isDemo ? 'No Admin Access' : t('nav.adminAccess')}
+                </span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -181,7 +232,7 @@ const Sidebar = () => {
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <span className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-white dark:to-indigo-300">RMSys</span>
+          <span className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-white dark:to-indigo-300">{t('common.rmsTitle')}</span>
         </div>
 
         {/* Mobile Toggle Button */}
@@ -208,10 +259,13 @@ const Sidebar = () => {
 
       {/* Desktop Sidebar */}
       <motion.aside
-        className="hidden md:flex flex-col fixed top-10 left-4 z-50 shadow-2xl rounded-[50px] border border-white/20 dark:border-white/10 overflow-hidden bg-white/40 dark:bg-black/20 backdrop-blur-2xl max-h-[90vh]"
+        className="hidden md:flex flex-col fixed top-10 ltr:left-4 rtl:right-4 z-50 shadow-2xl rounded-[50px] border border-white/20 dark:border-white/10 overflow-hidden bg-white/40 dark:bg-black/20 backdrop-blur-2xl max-h-[90vh]"
         // Height is auto (fit-content)
-        variants={sidebarVariants}
-        animate={isSidebarOpen ? 'expanded' : 'collapsed'}
+        animate={{
+          width: isSidebarOpen ? '280px' : '90px',
+          x: isScrolled ? 0 : 20
+        }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         initial={false}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -232,7 +286,7 @@ const Sidebar = () => {
               onClick={() => setIsMobileMenuOpen(false)}
             />
             <motion.aside
-              className="fixed top-24 left-4 right-4 bottom-auto max-h-[calc(100vh-120px)] z-50 md:hidden bg-white dark:bg-[#0f0f11] shadow-2xl rounded-[40px] flex flex-col overflow-hidden origin-top"
+              className="fixed top-28 left-4 right-4 bottom-auto max-h-[calc(100vh-140px)] z-50 md:hidden bg-white dark:bg-[#0f0f11] shadow-2xl rounded-[40px] flex flex-col overflow-hidden origin-top"
               initial={{ opacity: 0, scaleY: 0.8, y: -20 }}
               animate={{ opacity: 1, scaleY: 1, y: 0 }}
               exit={{ opacity: 0, scaleY: 0.8, y: -20 }}

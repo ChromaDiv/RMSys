@@ -5,8 +5,16 @@ import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Search, Coffee, UtensilsCrossed, ChevronRight, Pencil, Utensils } from 'lucide-react';
 import Modal from '@/components/Modal';
+import DemoSignupModal from '@/components/DemoSignupModal';
+import { useCurrency } from '@/context/CurrencyContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { useDemo } from '@/context/DemoContext';
+import { demoData } from '@/lib/demoData';
 
 function MenuContent() {
+  const { formatAmount } = useCurrency();
+  const { t } = useLanguage();
+  const { isDemo } = useDemo();
   const searchParams = useSearchParams();
   const [menu, setMenu] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -14,8 +22,13 @@ function MenuContent() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showDemoModal, setShowDemoModal] = useState(false);
   const [modalType, setModalType] = useState('item'); // 'category' or 'item'
   const [editingId, setEditingId] = useState(null);
+
+  // ...
+
+
 
   // Form State
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -24,7 +37,7 @@ function MenuContent() {
 
   useEffect(() => {
     fetchMenu();
-  }, []);
+  }, [isDemo]);
 
   useEffect(() => {
     if (searchParams.get('action') === 'add-item') {
@@ -41,13 +54,21 @@ function MenuContent() {
   }, [menu]);
 
   const fetchMenu = async () => {
+    setLoading(true);
     try {
-      const res = await fetch('/api/menu');
-      const data = await res.json();
-      if (data.success) {
-        setMenu(data.data);
-        if (!selectedCategory && data.data.length > 0) {
-          setSelectedCategory(data.data[0]);
+      if (isDemo) {
+        setMenu(demoData.menu || []);
+        if (!selectedCategory && demoData.menu?.length > 0) {
+          setSelectedCategory(demoData.menu[0]);
+        }
+      } else {
+        const res = await fetch('/api/menu');
+        const data = await res.json();
+        if (data.success) {
+          setMenu(data.data);
+          if (!selectedCategory && data.data.length > 0) {
+            setSelectedCategory(data.data[0]);
+          }
         }
       }
     } catch (e) {
@@ -177,21 +198,24 @@ function MenuContent() {
     return colors[index % colors.length];
   };
 
+
+
+
   return (
     <div className="max-w-7xl mx-auto min-h-screen md:h-[calc(100vh-140px)] flex flex-col gap-6">
       {/* Header */}
       <motion.div
-        className="flex flex-row items-center justify-between gap-4 shrink-0 px-6 py-6 md:px-10 md:py-8 rounded-[40px] bg-white/40 dark:bg-black/20 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden relative"
+        className="flex flex-row items-center justify-between gap-4 shrink-0 px-6 py-6 md:px-10 md:py-8 rounded-3xl bg-white/70 dark:bg-black/50 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden relative"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="relative z-10 w-full">
           <h1 className="text-2xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-gradient-x uppercase tracking-wider">
-            Menu Management
+            {t('menu.title')}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm font-medium hidden md:flex items-center gap-2">
             <Utensils size={18} className="text-indigo-500" />
-            Curate your digital menu and pricing.
+            {t('menu.subtitle')}
           </p>
         </div>
 
@@ -200,17 +224,23 @@ function MenuContent() {
       </motion.div>
 
       {/* Content Area - Premium Split Layout */}
-      <div className="flex-1 flex flex-col md:flex-row gap-8 overflow-visible md:overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row gap-8 overflow-visible md:overflow-hidden" dir="ltr">
 
         {/* Categories Sidebar - Vertical Premium Tabs */}
-        <div className="w-full md:w-72 flex flex-col gap-4 shrink-0 h-[300px] md:h-full overflow-hidden glass-card p-4 rounded-[32px] border border-white/60 dark:border-white/10 shadow-xl">
+        <motion.div
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="w-full md:w-72 flex flex-col gap-4 shrink-0 h-[300px] md:h-full overflow-hidden glass-card p-4 rounded-3xl border border-white/60 dark:border-white/10 shadow-xl"
+        >
           <div className="flex items-center justify-between px-2 mb-2">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Categories</h3>
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">{t('menu.categories')}</h3>
               <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-1 rounded-full font-bold">{menu.length}</span>
             </div>
             <button
-              onClick={() => openModal('category')}
+              onClick={() => {
+                if (isDemo) setShowDemoModal(true);
+                else openModal('category');
+              }}
               className="p-2 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 rounded-full transition-all"
             >
               <Plus size={16} />
@@ -221,6 +251,7 @@ function MenuContent() {
             {menu.map((cat, idx) => {
               const color = getCategoryColor(idx);
               const isSelected = selectedCategory?.id === cat.id;
+              const displayName = cat.name;
 
               return (
                 <motion.div
@@ -247,20 +278,31 @@ function MenuContent() {
                     {cat.name.includes('Coffee') ? <Coffee size={18} /> : <UtensilsCrossed size={18} />}
                   </div>
 
-                  <span className={`font-bold text-base flex-1 transition-colors leading-snug ${isSelected ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-200 group-hover:text-black dark:group-hover:text-white'}`}>
-                    {cat.name}
+                  <span className={`font-bold text-base flex-1 transition-colors min-w-0 ${isSelected ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-200 group-hover:text-black dark:group-hover:text-white'}`}>
+                    {displayName}
                   </span>
 
                   {/* Actions - Right Aligned & Always interactable if hovered */}
                   <div className={`flex gap-1 shrink-0 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
                     <button
-                      onClick={(e) => openEditCategory(e, cat)}
+                      onClick={(e) => {
+                        if (isDemo) {
+                          e.stopPropagation();
+                          setShowDemoModal(true);
+                        } else {
+                          openEditCategory(e, cat);
+                        }
+                      }}
                       className="p-1.5 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 highlight-hover"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isDemo) setShowDemoModal(true);
+                        else handleDeleteCategory(cat.id);
+                      }}
                       className="p-1.5 rounded-full text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 highlight-hover"
                     >
                       <Trash2 size={14} />
@@ -272,7 +314,7 @@ function MenuContent() {
 
 
           </div>
-        </div>
+        </motion.div>
 
         {/* Items Canvas */}
         <div className="flex-1 glass-card p-8 rounded-[32px] overflow-visible md:overflow-hidden flex flex-col relative border border-white/60 dark:border-white/10 shadow-2xl min-h-[500px]">
@@ -284,22 +326,27 @@ function MenuContent() {
                   <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">{selectedCategory.name}</h2>
                   <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    {selectedCategory.items.length} Active Items
+                    {selectedCategory.items.length} {t('menu.items')}
                   </p>
                 </div>
                 {/* Contextual Action - Add Item Button right here */}
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => openModal('item')}
+                  onClick={() => {
+                    if (isDemo) setShowDemoModal(true);
+                    else openModal('item');
+                  }}
                   className="p-3 bg-gray-900 dark:bg-white text-white dark:text-black rounded-full hover:shadow-lg transition-all"
                 >
                   <Plus size={20} />
                 </motion.button>
               </div>
 
-              <div className="flex-1 md:overflow-y-auto pr-2 no-scrollbar">
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pb-10">
+              <div
+                className="flex-1 md:overflow-y-auto pr-2 no-scrollbar"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 pb-10">
                   <AnimatePresence mode="popLayout">
                     {selectedCategory.items.map((item, idx) => (
                       <motion.div
@@ -309,18 +356,12 @@ function MenuContent() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ delay: idx * 0.04 }}
-                        className="group relative p-6 pb-16 rounded-[28px] bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-gray-900 dark:hover:border-white transition-all duration-300 flex flex-col h-full min-h-[200px]"
+                        className="group relative p-6 pb-24 rounded-[32px] bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100 dark:hover:border-indigo-500/30 transition-all duration-300 flex flex-col h-full min-h-[240px]"
                       >
-                        <div className="flex justify-between items-start mb-3">
-                          <h3 className="font-bold text-gray-900 dark:text-white text-xl leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                        <div className="mb-4 relative z-0">
+                          <h3 className="font-extrabold text-gray-900 dark:text-white text-2xl leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors text-left min-w-0 pr-12" dir="ltr">
                             {item.name}
                           </h3>
-                          <div className="flex flex-col items-end">
-                            <span className="text-lg font-black text-gray-900 dark:text-white">
-                              <span className="text-[10px] text-gray-400 font-bold mr-1 uppercase">Rs.</span>
-                              {item.price.toLocaleString()}
-                            </span>
-                          </div>
                         </div>
 
                         <div className="flex-1">
@@ -333,21 +374,36 @@ function MenuContent() {
                           )}
                         </div>
 
-                        {/* Minimal Action Strip */}
-                        <div className="absolute bottom-5 right-5 flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                        {/* Price - Bottom Right Pill */}
+                        <div className="absolute bottom-6 right-6">
+                          <span className="inline-flex items-center justify-center bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 px-6 py-2.5 rounded-full shadow-sm group-hover:shadow-md transition-all">
+                            <span className="text-xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
+                              {formatAmount(item.price)}
+                            </span>
+                          </span>
+                        </div>
+
+                        {/* Action Strip - Top Right */}
+                        <div className="absolute top-5 right-5 flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-[-10px] group-hover:translate-y-0 z-20">
                           <button
-                            onClick={() => openEditItem(item)}
-                            className="p-2.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-black transition-all shadow-sm"
-                            title="Edit Item"
+                            onClick={() => {
+                              if (isDemo) setShowDemoModal(true);
+                              else openEditItem(item);
+                            }}
+                            className="p-2.5 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300 rounded-full hover:text-indigo-600 hover:shadow-lg transition-all border border-gray-100 dark:border-white/10"
+                            title={t('common.edit')}
                           >
-                            <Pencil size={15} />
+                            <Pencil size={16} />
                           </button>
                           <button
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="p-2.5 bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"
-                            title="Delete Item"
+                            onClick={() => {
+                              if (isDemo) setShowDemoModal(true);
+                              else handleDeleteItem(item.id);
+                            }}
+                            className="p-2.5 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300 rounded-full hover:text-rose-600 hover:shadow-lg transition-all border border-gray-100 dark:border-white/10"
+                            title={t('common.delete')}
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </motion.div>
@@ -362,8 +418,8 @@ function MenuContent() {
               <div className="w-32 h-32 bg-indigo-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-6 animate-bounce">
                 <UtensilsCrossed size={48} className="text-indigo-300 dark:text-white/20" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Ready to curate?</h3>
-              <p className="text-gray-500 dark:text-gray-400 max-w-sm">Select a category from the left to manage your items, or create a fresh category to get started.</p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('menu.readyToCurate', 'Ready to curate?')}</h3>
+              <p className="text-gray-500 dark:text-gray-400 max-w-sm">{t('menu.selectCategoryDesc', 'Select a category from the left to manage your items, or create a fresh category to get started.')}</p>
             </div>
           )}
         </div>
@@ -372,34 +428,34 @@ function MenuContent() {
       <Modal
         isOpen={isModalOpen}
         onClose={resetForms}
-        title={modalType === 'category' ? (editingId ? "Edit Category" : "New Category") : (editingId ? "Edit Menu Item" : "Add Menu Item")}
+        title={modalType === 'category' ? (editingId ? t('common.edit') : t('menu.newCategory')) : (editingId ? t('common.edit') : t('menu.newItem'))}
       >
         <form onSubmit={modalType === 'category' ? handleSaveCategory : handleSaveItem} className="space-y-6">
           {modalType === 'category' ? (
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Category Name</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('menu.categoryName', 'Category Name')}</label>
               <input
                 value={newCategoryName}
                 onChange={e => setNewCategoryName(e.target.value)}
                 className="w-full p-4 rounded-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 outline-none font-medium"
-                placeholder="e.g. Desserts"
+                placeholder={t('menu.categoryPlaceholder', 'e.g. Desserts')}
                 required
               />
             </div>
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Item Name</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('menu.itemName', 'Item Name')}</label>
                 <input
                   value={newItem.name}
                   onChange={e => setNewItem({ ...newItem, name: e.target.value })}
                   className="w-full p-4 rounded-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 outline-none font-medium"
-                  placeholder="e.g. Chocolate Cake"
+                  placeholder={t('menu.itemPlaceholder', 'e.g. Chocolate Cake')}
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Price (Rs)</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('menu.price', 'Price')} (PKR)</label>
                 <input
                   type="number"
                   value={newItem.price}
@@ -410,23 +466,25 @@ function MenuContent() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Description</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('menu.description', 'Description')}</label>
                 <textarea
                   value={newItem.description}
                   onChange={e => setNewItem({ ...newItem, description: e.target.value })}
                   className="w-full p-4 rounded-3xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 outline-none font-medium resize-none"
                   rows="3"
-                  placeholder="Short description..."
+                  placeholder={t('menu.descriptionPlaceholder', 'Short description...')}
                 />
               </div>
             </div>
           )}
           <div className="flex justify-end gap-3 pt-6">
-            <button type="button" onClick={resetForms} className="px-6 py-2 text-gray-500 hover:text-gray-700 font-bold">Cancel</button>
-            <button type="submit" className="px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold shadow-lg">Save</button>
+            <button type="button" onClick={resetForms} className="px-6 py-2 text-gray-500 hover:text-gray-700 font-bold">{t('common.cancel')}</button>
+            <button type="submit" className="px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold shadow-lg">{t('common.save')}</button>
           </div>
         </form>
       </Modal>
+
+      <DemoSignupModal isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
     </div>
   );
 }
