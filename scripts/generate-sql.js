@@ -106,9 +106,9 @@ async function generateSQL() {
 SET FOREIGN_KEY_CHECKS=0;
 
 -- 1. Create User
-INSERT INTO User (email, name, password, emailVerified, createdAt)
+INSERT INTO User (email, name, password, email_verified, createdAt)
 VALUES ('${email}', 'Sohaib Latif', '${hashedPassword}', '${now}', '${now}')
-ON DUPLICATE KEY UPDATE name='Sohaib Latif', password='${hashedPassword}', emailVerified='${now}';
+ON DUPLICATE KEY UPDATE name='Sohaib Latif', password='${hashedPassword}', email_verified='${now}';
 
 -- Get the ID (Assuming it is 1 for clean DB, or we can use subquery but MySQL doesn't like subquery in INSERT sometimes)
 -- We will assume ID @userId.
