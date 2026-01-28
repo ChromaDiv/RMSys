@@ -40,13 +40,6 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
     setError(null);
     setDemo(false); // Clear demo mode
 
-    // DEV BACKDOOR (Login only)
-    if (view === 'login' && email === 'sohaib@chromadiv.com' && password === 'Welcome1234@') {
-      localStorage.setItem('rms_admin_bypass', 'true');
-      router.push('/dashboard');
-      onClose();
-      return;
-    }
 
     try {
       if (view === 'login') {

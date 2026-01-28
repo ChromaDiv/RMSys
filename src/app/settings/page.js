@@ -20,10 +20,6 @@ export default function SettingsPage() {
   const [activeModal, setActiveModal] = useState(null);
 
   const handleLogout = async () => {
-    // 1. Clear Admin Bypass
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('rms_admin_bypass');
-    }
 
     // 2. Clear Session
     signOut({ callbackUrl: '/' });
