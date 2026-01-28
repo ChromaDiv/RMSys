@@ -55,7 +55,7 @@ export default function Dashboard() {
       setRawSuppliers(demoData.suppliers);
       setLoading(false);
     } else {
-      // Fetch real data from Supabase via API
+      // Fetch real data via API
       try {
         const [ordersRes, inventoryRes] = await Promise.all([
           fetch('/api/orders'),
