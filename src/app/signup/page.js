@@ -50,7 +50,9 @@ export default function SignupPage() {
       }
 
       if (!res.ok) {
-        throw new Error(data.message || 'Something went wrong');
+        // Prefer the detailed 'error' field if available, otherwise 'message'
+        const errorMessage = data.error || data.message || 'Something went wrong';
+        throw new Error(errorMessage);
       }
 
       // 2. Clear form and show success message
