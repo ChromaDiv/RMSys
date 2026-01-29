@@ -48,45 +48,10 @@ export default function SupplyChainPage() {
   const [newSupplier, setNewSupplier] = useState({ name: '', type: '', rating: '5.0', status: 'Active' });
   const [loading, setLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [actionError, setActionError] = useState(null);
 
   // --- MENU INTEGRATION START ---
-  const [menuItems, setMenuItems] = useState([]);
-
-  useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        const res = await fetch('/api/menu');
-        const data = await res.json();
-        if (data.success) {
-          const allItems = data.data.flatMap(cat => cat.items);
-          setMenuItems(allItems);
-        }
-      } catch (e) { console.error(e); }
-    };
-    fetchMenu();
-  }, []);
-
-  const toggleItemSelection = (menuItem) => {
-    const currentItems = newOrder.items ? newOrder.items.split(',').filter(Boolean).map(i => i.trim()) : [];
-    const exists = currentItems.includes(menuItem.name);
-
-    let updatedItems;
-    let updatedTotal = parseFloat(newOrder.total) || 0;
-
-    if (exists) {
-      updatedItems = currentItems.filter(i => i !== menuItem.name);
-      updatedTotal -= menuItem.price;
-    } else {
-      updatedItems = [...currentItems, menuItem.name];
-      updatedTotal += menuItem.price;
-    }
-
-    setNewOrder({
-      ...newOrder,
-      items: updatedItems.join(', '),
-      total: Math.max(0, updatedTotal)
-    });
-  };
+  // Unused in SupplyChainPage
   // --- MENU INTEGRATION END ---
 
   useEffect(() => {
@@ -118,6 +83,7 @@ export default function SupplyChainPage() {
   const handleAddItem = async (e) => {
     e.preventDefault();
     setIsActionLoading(true);
+    setActionError(null);
     const tempId = Date.now();
     const itemToAdd = { ...newItem, quantity: Number(newItem.quantity) };
 
@@ -134,7 +100,9 @@ export default function SupplyChainPage() {
           setInventory(prev => prev.map(item => item.id === tempId ? data.data : item));
           setIsModalOpen(false);
           setNewItem({ item: '', quantity: '', unit: 'kg', supplier: '', status: 'Good' });
+          setActionError(null);
         } else {
+          setActionError(data.error || 'Failed to save inventory item.');
           setInventory(prev => prev.filter(item => item.id !== tempId));
         }
       } else {
@@ -143,6 +111,7 @@ export default function SupplyChainPage() {
       }
     } catch (e) {
       console.error(e);
+      setActionError(e.message);
       setInventory(prev => prev.filter(item => item.id !== tempId));
     } finally {
       setIsActionLoading(false);
@@ -664,6 +633,12 @@ export default function SupplyChainPage() {
         title={modalMode === 'supplier' ? t('supplyChain.addPartner') : (modalMode === 'edit-supplier' ? t('supplyChain.editPartner') : (modalMode === 'edit' ? t('supplyChain.editItem') : t('supplyChain.newItem')))}
       >
         <form onSubmit={(modalMode === 'supplier' || modalMode === 'edit-supplier') ? (modalMode === 'edit-supplier' ? handleEditSupplier : handleAddSupplier) : (modalMode === 'edit' ? handleEditItem : handleAddItem)} className="space-y-6">
+          {actionError && (
+            <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-sm font-bold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+              {actionError}
+            </div>
+          )}
           {(modalMode !== 'supplier' && modalMode !== 'edit-supplier') ? (
             // ITEM FORM (Add or Edit)
             <div className="space-y-4">

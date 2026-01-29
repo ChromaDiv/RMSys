@@ -27,6 +27,7 @@ function MenuContent() {
   const [modalType, setModalType] = useState('item'); // 'category' or 'item'
   const [editingId, setEditingId] = useState(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [actionError, setActionError] = useState(null);
 
   // ...
 
@@ -87,6 +88,7 @@ function MenuContent() {
   const handleSaveCategory = async (e) => {
     e.preventDefault();
     setIsActionLoading(true);
+    setActionError(null);
     try {
       const method = editingId ? 'PUT' : 'POST';
       const body = {
@@ -106,9 +108,12 @@ function MenuContent() {
       if (data.success) {
         await fetchMenu();
         resetForms();
+      } else {
+        setActionError(data.error || data.message || 'Failed to save category');
       }
     } catch (e) {
       console.error(e);
+      setActionError(e.message);
     } finally {
       setIsActionLoading(false);
     }
@@ -118,6 +123,7 @@ function MenuContent() {
     e.preventDefault();
     if (!selectedCategory) return;
     setIsActionLoading(true);
+    setActionError(null);
 
     try {
       const method = editingId ? 'PUT' : 'POST';
@@ -134,9 +140,12 @@ function MenuContent() {
       if (data.success) {
         await fetchMenu();
         resetForms();
+      } else {
+        setActionError(data.error || data.message || 'Failed to save item');
       }
     } catch (e) {
       console.error(e);
+      setActionError(e.message);
     } finally {
       setIsActionLoading(false);
     }
@@ -147,6 +156,7 @@ function MenuContent() {
     setNewItem({ name: '', price: '', description: '' });
     setEditingId(null);
     setIsModalOpen(false);
+    setActionError(null);
   };
 
   const openEditCategory = (e, cat) => {
@@ -443,6 +453,12 @@ function MenuContent() {
         title={modalType === 'category' ? (editingId ? t('common.edit') : t('menu.newCategory')) : (editingId ? t('common.edit') : t('menu.newItem'))}
       >
         <form onSubmit={modalType === 'category' ? handleSaveCategory : handleSaveItem} className="space-y-6">
+          {actionError && (
+            <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-sm font-bold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+              {actionError}
+            </div>
+          )}
           {modalType === 'category' ? (
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('menu.categoryName', 'Category Name')}</label>

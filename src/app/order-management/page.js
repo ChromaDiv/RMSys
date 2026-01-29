@@ -25,6 +25,7 @@ function OrderManagementContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [actionError, setActionError] = useState(null);
   const [newOrder, setNewOrder] = useState({
     customer: '',
     phone: '',
@@ -160,6 +161,7 @@ function OrderManagementContent() {
   const handleAddOrder = async (e) => {
     e.preventDefault();
     setIsActionLoading(true);
+    setActionError(null);
     const tempId = Date.now();
     const orderToAdd = {
       id: tempId,
@@ -183,14 +185,13 @@ function OrderManagementContent() {
         });
         const data = await res.json();
         if (data.success) {
-          // Replace temp item with real one from DB (with correct ID and createdAt)
           setOrders(prev => prev.map(o => o.id === tempId ? data.data : o));
           setNewOrder({ customer: '', phone: '', items: '', total: '', status: 'Preparing' });
           setIsModalOpen(false);
+          setActionError(null);
         } else {
           console.error("Server failed to save order:", data.error);
-          alert("Failed to save order to database. It will disappear on refresh.");
-          // Rollback if failure? Or just leave temp.
+          setActionError(data.error || 'Failed to save order to database.');
           setOrders(prev => prev.filter(o => o.id !== tempId));
         }
       } else {
@@ -199,6 +200,7 @@ function OrderManagementContent() {
       }
     } catch (e) {
       console.error("Failed to connect to API", e);
+      setActionError(e.message);
       setOrders(prev => prev.filter(o => o.id !== tempId));
     } finally {
       setIsActionLoading(false);
@@ -446,8 +448,14 @@ function OrderManagementContent() {
         onClose={() => setIsModalOpen(false)}
         title={t('orders.createOrder')}
       >
-        <form onSubmit={handleAddOrder} className="flex flex-col gap-6">
-          <div className="space-y-5">
+        <form onSubmit={handleAddOrder} houseName="flex flex-col gap-6">
+          {actionError && (
+            <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 text-sm font-bold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+              {actionError}
+            </div>
+          )}
+          <div className="flex flex-col gap-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-1.5">{t('orders.customerName')}</label>
