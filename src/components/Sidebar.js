@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSidebar } from '@/context/SidebarContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession, signOut } from '@/context/AuthContext';
 import clsx from 'clsx';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 

@@ -1,18 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
 import { motion } from 'framer-motion';
 import { Loader2, Mail, Lock, User, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useSession } from '@/context/AuthContext';
 
 export default function SignupPage() {
   const router = useRouter();
   const { t } = useLanguage();
   const { setDemo } = useDemo();
+  const { signUp } = useSession();
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,50 +26,38 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
-    // Clear demo mode for authenticated users
     setDemo(false);
 
     try {
-      // 1. Register User
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          name: fullName,
-        }),
+      const { data, error } = await signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
       });
 
-      let data;
-      const text = await res.text();
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error('Signup Syntax Response:', text);
-        throw new Error(`Server Error (${res.status}): ${text.slice(0, 50)}...`);
+      if (error) {
+        throw error;
       }
 
-      if (!res.ok) {
-        // Show detailed error if available
-        const errorMessage = data.details || data.error || data.message || 'Something went wrong';
-        throw new Error(errorMessage);
+      if (data?.user) {
+        if (data.session) {
+          router.push('/dashboard');
+        } else {
+          setSuccess('Account created! Please check your email if verification is enabled.');
+        }
       }
-
-      // 2. Clear form and show success message
-      setFullName('');
-      setEmail('');
-      setPassword('');
-      setSuccess(t('auth.errors.accountCreated'));
 
     } catch (err) {
-      if (err.message.includes("already exists")) {
+      console.error(err);
+      if (err.message && err.message.includes("already registered")) {
         setError(t('auth.errors.emailTaken'));
       } else {
         setError(err.message || t('auth.errors.unexpected'));
       }
-      console.error(err);
     } finally {
       setLoading(false);
     }

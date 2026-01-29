@@ -1,17 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Mail, Lock, User, X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useSession } from '@/context/AuthContext';
 
 export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
   const router = useRouter();
   const { t } = useLanguage();
   const { setDemo } = useDemo();
+  const { signInWithPassword, signUp } = useSession();
 
   const [view, setView] = useState(initialView); // 'login' or 'signup'
   const [email, setEmail] = useState('');
@@ -38,55 +39,56 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setDemo(false); // Clear demo mode
-
+    setDemo(false);
 
     try {
       if (view === 'login') {
-        const result = await signIn('credentials', {
-          redirect: false,
+        const { data, error } = await signInWithPassword({
           email,
           password,
         });
 
-        if (result.error) {
-          const msg = result.error.includes('Email not verified')
-            ? t('auth.errors.emailNotConfirmed')
-            : (t('auth.errors.invalidCredentials') || 'Invalid email or password');
-          setError(msg);
-        } else {
+        if (error) throw error;
+
+        if (data.session) {
           router.push('/dashboard');
           onClose();
         }
       } else {
         // Signup
-        const res = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            password,
-            name: fullName,
-          }),
+        const { data, error } = await signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+            },
+          },
         });
 
-        const data = await res.json();
+        if (error) throw error;
 
-        if (!res.ok) {
-          if (data.message.includes("already exists")) {
-            setError(t('auth.errors.emailTaken'));
+        if (data?.user) {
+          if (data.session) {
+            router.push('/dashboard');
+            onClose();
           } else {
-            setError(data.message || t('auth.errors.unexpected'));
+            setSuccess('Account created! Please check your email if verification is enabled.');
+            setEmail('');
+            setPassword('');
+            setFullName('');
           }
-        } else {
-          setSuccess(t('auth.errors.accountCreated'));
-          setEmail('');
-          setPassword('');
-          setFullName('');
         }
       }
+
     } catch (err) {
-      setError(t('auth.errors.unexpected'));
+      if (err.message.includes('Invalid login credentials')) {
+        setError(t('auth.errors.invalidCredentials') || 'Invalid email or password');
+      } else if (err.message.includes('already registered')) {
+        setError(t('auth.errors.emailTaken'));
+      } else {
+        setError(err.message || t('auth.errors.unexpected'));
+      }
       console.error(err);
     } finally {
       setLoading(false);

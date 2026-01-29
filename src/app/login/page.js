@@ -1,19 +1,21 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
 import { motion } from 'framer-motion';
 import { ArrowRight, Loader2, Mail, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useSession } from '@/context/AuthContext';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLanguage();
   const { setDemo } = useDemo();
+  const { signInWithPassword } = useSession(); // Use Supabase Auth from context
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,29 +42,31 @@ function LoginContent() {
     setLoading(true);
     setError(null);
     setSuccess(null);
-
-    // Clear demo mode for authenticated users
     setDemo(false);
 
     try {
-      const result = await signIn('credentials', {
-        redirect: false,
+      const { data, error } = await signInWithPassword({
         email,
         password,
       });
 
-      if (result.error) {
-        // Map common errors if needed
-        const msg = result.error.includes('Email not verified')
-          ? t('auth.errors.emailNotConfirmed')
-          : (t('auth.errors.invalidCredentials') || 'Invalid email or password');
-        setError(msg);
-      } else {
+      if (error) {
+        throw error;
+      }
+
+      if (data.session) {
         router.push('/dashboard');
       }
+
     } catch (err) {
-      setError(t('auth.errors.unexpected'));
       console.error(err);
+      if (err.message.includes('Invalid login credentials')) {
+        setError(t('auth.errors.invalidCredentials') || 'Invalid email or password');
+      } else if (err.message.includes('Email not confirmed')) {
+        setError(t('auth.errors.emailNotConfirmed') || 'Email not confirmed');
+      } else {
+        setError(err.message || t('auth.errors.unexpected'));
+      }
     } finally {
       setLoading(false);
     }
