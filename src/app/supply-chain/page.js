@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Package, Truck, Star, Plus, Trash2, Box, Activity, TrendingUp, AlertCircle, CheckCircle2, ChevronDown, Check, Sparkles, Minus, Edit3 } from 'lucide-react';
 import Modal from '@/components/Modal';
 import DemoSignupModal from '@/components/DemoSignupModal';
+import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
 import { demoData } from '@/lib/demoData';
 import LoadingSpinner from '@/components/LoadingSpinner';
