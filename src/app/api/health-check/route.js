@@ -14,6 +14,34 @@ export async function GET() {
     dbError = e.message;
   }
 
+  // Safe debug extraction from process.env.DATABASE_URL
+  const dbEnv = process.env.DATABASE_URL || '';
+  let maskedDbInfo = {
+    exists: !!dbEnv,
+    host: 'N/A',
+    user: 'N/A',
+    database: 'N/A',
+    passwordLength: 0,
+    passwordStart: 'N/A',
+    protocol: 'N/A'
+  };
+
+  try {
+    if (dbEnv) {
+      // Manual parsing to avoid URL errors if protocol is missing
+      // mysql://user:pass@host:port/db
+      const urlParts = new URL(dbEnv);
+      maskedDbInfo.host = urlParts.hostname;
+      maskedDbInfo.user = urlParts.username;
+      maskedDbInfo.database = urlParts.pathname.replace('/', '');
+      maskedDbInfo.passwordLength = urlParts.password.length;
+      maskedDbInfo.passwordStart = urlParts.password.substring(0, 2) + '***';
+      maskedDbInfo.protocol = urlParts.protocol;
+    }
+  } catch (parseErr) {
+    maskedDbInfo.parseError = parseErr.message;
+  }
+
   return NextResponse.json({
     env_check: {
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'UNDEFINED',
@@ -23,8 +51,9 @@ export async function GET() {
     },
     db_check: {
       status: dbStatus,
-      error: dbError
+      error: dbError,
+      debug: maskedDbInfo
     },
-    message: "Check db_check.status. If FAILED, the DATABASE_URL is wrong."
+    message: "Check db_check.status and db_check.debug. Verify that the host and user match your Hostinger DB details."
   });
 }
