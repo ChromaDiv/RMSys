@@ -16,6 +16,19 @@ export async function GET() {
   try {
     await prisma.$queryRaw`SELECT 1`;
     diagnostics.database = 'connected';
+
+    // Check if tables exist
+    try {
+      diagnostics.schema = {
+        users: await prisma.user.count().catch(() => 'Missing'),
+        categories: await prisma.category.count().catch(() => 'Missing'),
+        menu: await prisma.menu.count().catch(() => 'Missing'),
+        orders: await prisma.order.count().catch(() => 'Missing'),
+      };
+    } catch (schemaErr) {
+      diagnostics.schema = 'Error checking schema: ' + schemaErr.message;
+    }
+
     return NextResponse.json({ status: 'ok', ...diagnostics });
   } catch (error) {
     diagnostics.database = 'disconnected';

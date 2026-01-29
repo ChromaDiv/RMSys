@@ -7,7 +7,7 @@ export async function getAuthSession() {
   const token = cookieStore.get('supa_token')?.value;
 
   if (!token) {
-    console.log('getAuthSession: No supa_token found in cookies');
+    // console.log('getAuthSession: No supa_token found in cookies');
     return null;
   }
 
@@ -15,31 +15,44 @@ export async function getAuthSession() {
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      console.log('getAuthSession: Supabase returned error or no user', error?.message);
+      console.log('getAuthSession: Supabase auth error or user missing:', error?.message);
       return null;
     }
 
-    // Find Prisma user to get the Integer ID
-    const dbUser = await prisma.user.findUnique({
+    // Attempt to find or CREATE the user in Prisma (Lazy Sync)
+    let dbUser = await prisma.user.findUnique({
       where: { email: user.email },
     });
 
     if (!dbUser) {
-      console.log('getAuthSession: User authenticated in Supabase but not found in Prisma DB:', user.email);
-      return null;
+      console.log('getAuthSession: Syncing Supabase user to Prisma DB:', user.email);
+      try {
+        dbUser = await prisma.user.create({
+          data: {
+            email: user.email,
+            name: user.user_metadata?.full_name || user.email.split('@')[0],
+          }
+        });
+        console.log('getAuthSession: Successfully created Prisma user:', dbUser.id);
+      } catch (createError) {
+        console.error('getAuthSession: Failed to create Prisma user:', createError.message);
+        // If creation fails (e.g. unique constraint or DB error), we might still want to proceed if it was a race condition
+        dbUser = await prisma.user.findUnique({ where: { email: user.email } });
+        if (!dbUser) return null;
+      }
     }
 
-    console.log('getAuthSession: Success', dbUser.email, dbUser.id);
+    // console.log('getAuthSession: Success', dbUser.email, dbUser.id);
 
     return {
       user: {
-        id: dbUser.id, // Integer ID for legacy compatibility
+        id: dbUser.id,
         email: dbUser.email,
         name: dbUser.name,
       }
     };
   } catch (e) {
-    console.error('getAuthSession Error:', e);
+    console.error('getAuthSession Critical Error:', e.message);
     return null;
   }
 }
