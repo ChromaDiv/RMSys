@@ -17,11 +17,12 @@ const getSupabase = () => {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (url && key) {
-    console.log('✅ Supabase initialized successfully');
+    console.log('✅ Supabase initialized successfully. URL:', url.substring(0, 15) + '...');
     _supabase = createClient(url, key);
     return _supabase;
   }
 
+  console.log('❌ Supabase Config missing. URL:', url ? 'Present' : 'Missing', 'Key:', key ? 'Present' : 'Missing');
   const configurationError = new Error('Supabase is not configured. Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment or next.config.mjs and that you have REDEPLOYED.');
 
   // Comprehensive mock to prevent crashes throughout the app
