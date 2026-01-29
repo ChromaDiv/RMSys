@@ -9,6 +9,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 let _supabase = null;
 
+const FALLBACK_URL = 'https://pjlifzwsxqbeetliyniw.supabase.co';
+const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqbGlmendzeHFiZWV0bGl5bml3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNDkxOTQsImV4cCI6MjA4NDkyNTE5NH0.SNc3py6WkJozjskchIdq2oAmftSB2kmoRd_2eU1GsZQ';
+
 const getSupabase = () => {
   if (_supabase) return _supabase;
 
@@ -17,8 +20,8 @@ const getSupabase = () => {
   let key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // 2. Nuclear Option: Hardcoded fallbacks specifically for Hostinger environment issues
-  if (!url || url === 'undefined') url = 'https://pjlifzwsxqbeetliyniw.supabase.co';
-  if (!key || key === 'undefined') key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqbGlmendzeHFiZWV0bGl5bml3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNDkxOTQsImV4cCI6MjA4NDkyNTE5NH0.SNc3py6WkJozjskchIdq2oAmftSB2kmoRd_2eU1GsZQ';
+  if (!url || url === 'undefined' || url === 'null' || url === '') url = FALLBACK_URL;
+  if (!key || key === 'undefined' || key === 'null' || key === '') key = FALLBACK_KEY;
 
   if (url && key) {
     console.log('✅ Supabase initialized successfully. URL:', url.substring(0, 15) + '...');
@@ -27,7 +30,8 @@ const getSupabase = () => {
   }
 
   console.log('❌ Supabase Config missing. URL:', url ? 'Present' : 'Missing', 'Key:', key ? 'Present' : 'Missing');
-  const configurationError = new Error('Supabase is not configured. Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment or next.config.mjs and that you have REDEPLOYED.');
+  const buildDate = 'Jan 30 03:20 AM'; // Update this to current build time
+  const configurationError = new Error(`Supabase is not configured (Build: ${buildDate}). Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set or next.config.mjs handles them and REDEPLOY.`);
 
   // Comprehensive mock to prevent crashes throughout the app
   return {
