@@ -1,108 +1,16 @@
 import { NextResponse } from 'next/server';
-// Removed top-level prisma import to prevent module-level crashes
-
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    let dbStatus = 'UNKNOWN';
-    let dbError = null;
-
-    try {
-      // Try to connect/query using a local safe instance
-      const dbUrl = process.env.DATABASE_URL;
-      if (!dbUrl) {
-        throw new Error('DATABASE_URL is undefined in process.env');
-      }
-
-      // Instantiate locally to catch config errors
-      const prisma = new PrismaClient({
-        datasources: { db: { url: dbUrl } }
-      });
-
-      try {
-        await prisma.$queryRaw`SELECT 1`;
-        dbStatus = 'CONNECTED';
-        await prisma.$disconnect();
-      } catch (queryErr) {
-        dbStatus = 'FAILED';
-        dbError = queryErr.message;
-        // Attempt clean disconnect
-        try { await prisma.$disconnect(); } catch (e) { }
-      }
-
-    } catch (e) {
-      dbStatus = 'CONFIG_ERROR';
-      dbError = e.message;
-    }
-
-    // Fetch public IP for whitelisting with timeout
-    let serverIp = 'Unknown';
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-      const ipRes = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
-      clearTimeout(timeoutId);
-
-      if (ipRes.ok) {
-        const ipData = await ipRes.json();
-        serverIp = ipData.ip;
-      }
-    } catch (e) {
-      serverIp = 'Failed to fetch: ' + e.message;
-    }
-
-    // Safe debug extraction from process.env.DATABASE_URL
-    const dbEnv = process.env.DATABASE_URL || '';
-    let maskedDbInfo = {
-      exists: !!dbEnv,
-      host: 'N/A',
-      user: 'N/A',
-      database: 'N/A',
-      passwordLength: 0,
-      passwordStart: 'N/A',
-      protocol: 'N/A'
-    };
-
-    try {
-      if (dbEnv) {
-        // Manual parsing to avoid URL errors if protocol is missing
-        // mysql://user:pass@host:port/db
-        const urlParts = new URL(dbEnv);
-        maskedDbInfo.host = urlParts.hostname;
-        maskedDbInfo.user = urlParts.username;
-        maskedDbInfo.database = urlParts.pathname.replace('/', '');
-        maskedDbInfo.passwordLength = urlParts.password.length;
-        maskedDbInfo.passwordStart = urlParts.password.substring(0, 2) + '***';
-        maskedDbInfo.protocol = urlParts.protocol;
-      }
-    } catch (parseErr) {
-      maskedDbInfo.parseError = parseErr.message;
-    }
-
-    return NextResponse.json({
-      env_check: {
-        NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'UNDEFINED',
-        NEXTAUTH_URL_INTERNAL: process.env.NEXTAUTH_URL_INTERNAL || 'UNDEFINED',
-        NODE_ENV: process.env.NODE_ENV,
-        HAS_SECRET: !!process.env.NEXTAUTH_SECRET,
-        SERVER_IP: serverIp // Useful for Remote MySQL whitelisting
-      },
-      db_check: {
-        status: dbStatus,
-        error: dbError,
-        debug: maskedDbInfo
-      },
-      message: "Check env_check.SERVER_IP. Ensure this IP is whitelisted in Hostinger 'Remote MySQL'."
-    });
-
-  } catch (globalError) {
-    return NextResponse.json({
-      status: 'CRITICAL_FAILURE',
-      error: globalError.message,
-      stack: globalError.stack
-    }, { status: 200 });
+    await prisma.$queryRaw`SELECT 1`;
+    return NextResponse.json({ status: 'ok', database: 'connected' });
+  } catch (error) {
+    return NextResponse.json(
+      { status: 'error', database: 'disconnected', message: error.message },
+      { status: 500 }
+    );
   }
 }
