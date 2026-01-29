@@ -17,8 +17,8 @@ const getSupabase = () => {
   let key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   // 2. Nuclear Option: Hardcoded fallbacks specifically for Hostinger environment issues
-  if (!url) url = 'https://pjlifzwsxqbeetliyniw.supabase.co';
-  if (!key) key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqbGlmendzeHFiZWV0bGl5bml3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNDkxOTQsImV4cCI6MjA4NDkyNTE5NH0.SNc3py6WkJozjskchIdq2oAmftSB2kmoRd_2eU1GsZQ';
+  if (!url || url === 'undefined') url = 'https://pjlifzwsxqbeetliyniw.supabase.co';
+  if (!key || key === 'undefined') key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqbGlmendzeHFiZWV0bGl5bml3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNDkxOTQsImV4cCI6MjA4NDkyNTE5NH0.SNc3py6WkJozjskchIdq2oAmftSB2kmoRd_2eU1GsZQ';
 
   if (url && key) {
     console.log('✅ Supabase initialized successfully. URL:', url.substring(0, 15) + '...');
