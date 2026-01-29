@@ -87,11 +87,7 @@ export default function LandingPage() {
         <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-purple-600/10 rounded-full blur-[100px] -z-10" />
 
         <div className="max-w-5xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
             <span className="inline-block px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-6">
               {t('landing.hero.badge')}
             </span>
@@ -116,7 +112,7 @@ export default function LandingPage() {
                 <ChevronRight className={`w-4 h-4 transition-transform ${language === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
