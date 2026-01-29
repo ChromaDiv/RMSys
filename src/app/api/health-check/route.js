@@ -14,6 +14,18 @@ export async function GET() {
     dbError = e.message;
   }
 
+  // Fetch public IP for whitelisting
+  let serverIp = 'Unknown';
+  try {
+    const ipRes = await fetch('https://api.ipify.org?format=json');
+    if (ipRes.ok) {
+      const ipData = await ipRes.json();
+      serverIp = ipData.ip;
+    }
+  } catch (e) {
+    serverIp = 'Failed to fetch: ' + e.message;
+  }
+
   // Safe debug extraction from process.env.DATABASE_URL
   const dbEnv = process.env.DATABASE_URL || '';
   let maskedDbInfo = {
@@ -48,12 +60,13 @@ export async function GET() {
       NEXTAUTH_URL_INTERNAL: process.env.NEXTAUTH_URL_INTERNAL || 'UNDEFINED',
       NODE_ENV: process.env.NODE_ENV,
       HAS_SECRET: !!process.env.NEXTAUTH_SECRET,
+      SERVER_IP: serverIp // Useful for Remote MySQL whitelisting
     },
     db_check: {
       status: dbStatus,
       error: dbError,
       debug: maskedDbInfo
     },
-    message: "Check db_check.status and db_check.debug. Verify that the host and user match your Hostinger DB details."
+    message: "Check env_check.SERVER_IP. Ensure this IP is whitelisted in Hostinger 'Remote MySQL'."
   });
 }
