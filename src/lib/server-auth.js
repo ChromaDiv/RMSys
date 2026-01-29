@@ -12,10 +12,20 @@ export async function getAuthSession() {
   }
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    let user;
+    let authError;
 
-    if (error || !user) {
-      console.log('getAuthSession: Supabase auth error or user missing:', error?.message);
+    try {
+      const result = await supabase.auth.getUser(token);
+      user = result.data.user;
+      authError = result.error;
+    } catch (tokenError) {
+      console.warn('getAuthSession: Malformed token detected:', tokenError.message);
+      return null;
+    }
+
+    if (authError || !user) {
+      console.log('getAuthSession: Supabase auth error or user missing:', authError?.message);
       return null;
     }
 
