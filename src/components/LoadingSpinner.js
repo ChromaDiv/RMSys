@@ -35,7 +35,7 @@ const LoadingSpinner = ({
 
   if (fullPage) {
     return (
-      <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-md">
+      <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-md">
         <div className="glass-card p-10 rounded-3xl border border-white/20 shadow-2xl">
           {spinner}
         </div>

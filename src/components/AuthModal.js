@@ -7,6 +7,7 @@ import { useDemo } from '@/context/DemoContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Mail, Lock, User, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useSession } from '@/context/AuthContext';
+import LoadingSpinner from './LoadingSpinner';
 
 export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
   const router = useRouter();
@@ -97,6 +98,12 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
 
   return (
     <AnimatePresence>
+      {loading && (
+        <LoadingSpinner
+          fullPage
+          text={view === 'login' ? 'Signing In...' : 'Creating Account...'}
+        />
+      )}
       {isOpen && (
         <>
           <motion.div
