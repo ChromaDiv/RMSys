@@ -12,10 +12,21 @@ export function AuthProvider({ children }) {
   const router = useRouter();
 
   useEffect(() => {
+    const syncCookie = (session) => {
+      if (session?.access_token) {
+        console.log('AuthContext: Setting supa_token cookie', session.access_token.substring(0, 10) + '...');
+        document.cookie = `supa_token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax`;
+      } else {
+        console.log('AuthContext: Clearing supa_token cookie');
+        document.cookie = 'supa_token=; path=/; max-age=0';
+      }
+    };
+
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
+      syncCookie(session);
     });
 
     // Listen for changes
@@ -24,14 +35,7 @@ export function AuthProvider({ children }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false);
-
-      // Sync cookie for server-side API routes
-      if (session?.access_token) {
-        document.cookie = `supa_token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax`;
-      } else if (_event === 'SIGNED_OUT' || !session) {
-        document.cookie = 'supa_token=; path=/; max-age=0';
-        setLoading(false);
-      }
+      syncCookie(session);
     });
 
     return () => subscription.unsubscribe();

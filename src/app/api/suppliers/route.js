@@ -7,11 +7,18 @@ export async function GET() {
     const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-    const data = await prisma.supplier.findMany({
+    const suppliers = await prisma.supplier.findMany({
       where: { userId: session.user.id }
     });
+
+    const data = suppliers.map(s => ({
+      ...s,
+      rating: Number(s.rating)
+    }));
+
     return NextResponse.json({ success: true, data });
   } catch (error) {
+    console.error('Suppliers GET Error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
@@ -31,8 +38,15 @@ export async function POST(request) {
         status: body.status || 'Active'
       }
     });
-    return NextResponse.json({ success: true, data: newSupplier });
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...newSupplier,
+        rating: Number(newSupplier.rating)
+      }
+    });
   } catch (error) {
+    console.error('Supplier POST Error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Package, Truck, Star, Plus, Trash2, Box, Activity, TrendingUp, AlertCircle, CheckCircle2, ChevronDown, Check, Sparkles, Minus, Edit3 } from 'lucide-react';
 import Modal from '@/components/Modal';
 import DemoSignupModal from '@/components/DemoSignupModal';
-import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
 import { demoData } from '@/lib/demoData';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 // Animation Variants
 const containerVariants = {
@@ -46,6 +46,7 @@ export default function SupplyChainPage() {
   const [newItem, setNewItem] = useState({ item: '', quantity: '', unit: 'kg', supplier: '', status: 'Good', min_threshold: 15 });
   const [newSupplier, setNewSupplier] = useState({ name: '', type: '', rating: '5.0', status: 'Active' });
   const [loading, setLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   // --- MENU INTEGRATION START ---
   const [menuItems, setMenuItems] = useState([]);
@@ -115,30 +116,35 @@ export default function SupplyChainPage() {
 
   const handleAddItem = async (e) => {
     e.preventDefault();
+    setIsActionLoading(true);
     const tempId = Date.now();
     const itemToAdd = { ...newItem, quantity: Number(newItem.quantity) };
 
-    // Optimistic update
-
-
     setInventory([{ id: tempId, ...itemToAdd }, ...inventory]);
-    setIsModalOpen(false);
-    setNewItem({ item: '', quantity: '', unit: 'kg', supplier: '', status: 'Good' });
 
-    if (!isDemo) {
-      try {
+    try {
+      if (!isDemo) {
         const res = await fetch('/api/supply-chain', {
           method: 'POST',
           body: JSON.stringify(itemToAdd)
         });
         const data = await res.json();
         if (data.success) {
-          // Replace temp item with real one from DB
           setInventory(prev => prev.map(item => item.id === tempId ? data.data : item));
+          setIsModalOpen(false);
+          setNewItem({ item: '', quantity: '', unit: 'kg', supplier: '', status: 'Good' });
+        } else {
+          setInventory(prev => prev.filter(item => item.id !== tempId));
         }
-      } catch (e) {
-        console.error(e);
+      } else {
+        setIsModalOpen(false);
+        setNewItem({ item: '', quantity: '', unit: 'kg', supplier: '', status: 'Good' });
       }
+    } catch (e) {
+      console.error(e);
+      setInventory(prev => prev.filter(item => item.id !== tempId));
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -223,8 +229,9 @@ export default function SupplyChainPage() {
 
   const handleAddSupplier = async (e) => {
     e.preventDefault();
-    if (!isDemo) {
-      try {
+    setIsActionLoading(true);
+    try {
+      if (!isDemo) {
         const res = await fetch('/api/suppliers', {
           method: 'POST',
           body: JSON.stringify(newSupplier)
@@ -235,12 +242,15 @@ export default function SupplyChainPage() {
           setIsModalOpen(false);
           setNewSupplier({ name: '', type: '', rating: '5.0', status: 'Active' });
         }
-      } catch (e) { console.error(e); }
-    } else {
-      // Demo Mode
-      setSuppliers([...suppliers, { id: Date.now(), ...newSupplier }]);
-      setIsModalOpen(false);
-      setNewSupplier({ name: '', type: '', rating: '5.0', status: 'Active' });
+      } else {
+        setSuppliers([...suppliers, { id: Date.now(), ...newSupplier }]);
+        setIsModalOpen(false);
+        setNewSupplier({ name: '', type: '', rating: '5.0', status: 'Active' });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -750,12 +760,17 @@ export default function SupplyChainPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit"
-              className={`px-8 py-2 rounded-full text-white font-bold hover:shadow-lg transition-all ${modalMode === 'supplier'
+              disabled={isActionLoading}
+              className={`px-8 py-2 rounded-full text-white font-bold hover:shadow-lg transition-all flex items-center gap-2 min-w-[120px] justify-center disabled:opacity-70 ${modalMode === 'supplier'
                 ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:shadow-purple-500/30'
                 : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-indigo-500/30'
                 }`}
             >
-              {modalMode === 'supplier' ? t('supplyChain.addPartner') : (modalMode === 'edit-supplier' ? t('supplyChain.editPartner') : (modalMode === 'edit' ? t('supplyChain.editItem') : t('common.save')))}
+              {isActionLoading ? (
+                <LoadingSpinner size="small" color="white" text={modalMode.includes('edit') ? 'Saving...' : 'Adding...'} />
+              ) : (
+                modalMode === 'supplier' ? t('supplyChain.addPartner') : (modalMode === 'edit-supplier' ? t('supplyChain.editPartner') : (modalMode === 'edit' ? t('supplyChain.editItem') : t('common.save')))
+              )}
             </motion.button>
           </div>
         </form>

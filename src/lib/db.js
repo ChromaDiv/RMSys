@@ -15,6 +15,12 @@ if (!DATABASE_URL) {
 
 const globalForPrisma = globalThis;
 
+// Force reset in dev if models are missing (e.g. after schema change)
+if (process.env.NODE_ENV !== 'production' && globalForPrisma.prisma && !globalForPrisma.prisma.category) {
+  console.log('🔄 Category model missing on cached Prisma client. Resetting...');
+  delete globalForPrisma.prisma;
+}
+
 export const prisma = globalForPrisma.prisma || new PrismaClient({
   datasources: {
     db: {

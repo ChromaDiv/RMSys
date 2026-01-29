@@ -11,6 +11,7 @@ import { useDemo } from '@/context/DemoContext';
 import { useSession, signOut } from '@/context/AuthContext';
 import clsx from 'clsx';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import LoadingSpinner from './LoadingSpinner';
 
 const Sidebar = () => {
   const pathname = usePathname();
@@ -19,6 +20,7 @@ const Sidebar = () => {
   const { isDemo, setDemo } = useDemo();
   const [isHovered, setIsHovered] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { isCollapsed, toggleSidebar } = useSidebar();
   const { t } = useLanguage();
   const [userName, setUserName] = useState('Sohaib Latif');
@@ -65,11 +67,17 @@ const Sidebar = () => {
   };
 
   const handleExitOrLogout = async () => {
-    if (isDemo) {
-      setDemo(false);
-      router.push('/');
-    } else {
-      signOut({ callbackUrl: '/' });
+    setIsLoggingOut(true);
+    try {
+      if (isDemo) {
+        setDemo(false);
+        router.push('/');
+      } else {
+        await signOut({ callbackUrl: '/' });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
     }
   };
 
@@ -213,6 +221,7 @@ const Sidebar = () => {
 
   return (
     <>
+      {isLoggingOut && <LoadingSpinner fullPage text="Logging out..." />}
       {/* Mobile Header Bar */}
       <div className="md:hidden fixed top-10 left-4 right-4 h-16 bg-white/70 dark:bg-black/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full z-[100] flex items-center justify-between px-6 shadow-xl">
         {/* Mobile Branding */}

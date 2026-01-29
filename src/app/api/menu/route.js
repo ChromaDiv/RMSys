@@ -116,7 +116,14 @@ export async function POST(request) {
         }
       });
       console.log('Item created:', newItem);
-      return NextResponse.json({ success: true, message: 'Item added', data: newItem });
+      return NextResponse.json({
+        success: true,
+        message: 'Item added',
+        data: {
+          ...newItem,
+          price: Number(newItem.price)
+        }
+      });
     }
 
     if (type === 'category') {

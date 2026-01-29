@@ -10,6 +10,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
 import { demoData } from '@/lib/demoData';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 function OrderManagementContent() {
   const { formatAmount } = useCurrency();
@@ -23,6 +24,7 @@ function OrderManagementContent() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showDemoModal, setShowDemoModal] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [newOrder, setNewOrder] = useState({
     customer: '',
     phone: '',
@@ -157,6 +159,7 @@ function OrderManagementContent() {
 
   const handleAddOrder = async (e) => {
     e.preventDefault();
+    setIsActionLoading(true);
     const tempId = Date.now();
     const orderToAdd = {
       id: tempId,
@@ -170,11 +173,9 @@ function OrderManagementContent() {
     };
 
     setOrders([orderToAdd, ...orders]);
-    setNewOrder({ customer: '', phone: '', items: '', total: '', status: 'Preparing' });
-    setIsModalOpen(false);
 
-    if (!isDemo) {
-      try {
+    try {
+      if (!isDemo) {
         const res = await fetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -184,13 +185,23 @@ function OrderManagementContent() {
         if (data.success) {
           // Replace temp item with real one from DB (with correct ID and createdAt)
           setOrders(prev => prev.map(o => o.id === tempId ? data.data : o));
+          setNewOrder({ customer: '', phone: '', items: '', total: '', status: 'Preparing' });
+          setIsModalOpen(false);
         } else {
           console.error("Server failed to save order:", data.error);
           alert("Failed to save order to database. It will disappear on refresh.");
+          // Rollback if failure? Or just leave temp.
+          setOrders(prev => prev.filter(o => o.id !== tempId));
         }
-      } catch (e) {
-        console.error("Failed to connect to API", e);
+      } else {
+        setNewOrder({ customer: '', phone: '', items: '', total: '', status: 'Preparing' });
+        setIsModalOpen(false);
       }
+    } catch (e) {
+      console.error("Failed to connect to API", e);
+      setOrders(prev => prev.filter(o => o.id !== tempId));
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -523,8 +534,25 @@ function OrderManagementContent() {
           </div>
 
           <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-white/10">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white font-black transition-colors">{t('common.cancel')}</button>
-            <button type="submit" className="px-10 py-3 bg-indigo-600 rounded-full text-white font-black hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 transition-all">{t('orders.createOrder')}</button>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              disabled={isActionLoading}
+              className="px-6 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white font-black transition-colors disabled:opacity-50"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type="submit"
+              disabled={isActionLoading}
+              className="px-10 py-3 bg-indigo-600 rounded-full text-white font-black hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 transition-all flex items-center gap-2 min-w-[150px] justify-center disabled:opacity-70"
+            >
+              {isActionLoading ? (
+                <LoadingSpinner size="small" color="white" text="Creating..." />
+              ) : (
+                t('orders.createOrder')
+              )}
+            </button>
           </div>
         </form>
       </Modal>

@@ -10,6 +10,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
 import { demoData } from '@/lib/demoData';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 function MenuContent() {
   const { formatAmount } = useCurrency();
@@ -25,6 +26,7 @@ function MenuContent() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [modalType, setModalType] = useState('item'); // 'category' or 'item'
   const [editingId, setEditingId] = useState(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   // ...
 
@@ -84,6 +86,7 @@ function MenuContent() {
 
   const handleSaveCategory = async (e) => {
     e.preventDefault();
+    setIsActionLoading(true);
     try {
       const method = editingId ? 'PUT' : 'POST';
       const body = {
@@ -104,12 +107,17 @@ function MenuContent() {
         await fetchMenu();
         resetForms();
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const handleSaveItem = async (e) => {
     e.preventDefault();
     if (!selectedCategory) return;
+    setIsActionLoading(true);
 
     try {
       const method = editingId ? 'PUT' : 'POST';
@@ -127,7 +135,11 @@ function MenuContent() {
         await fetchMenu();
         resetForms();
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   const resetForms = () => {
@@ -478,8 +490,25 @@ function MenuContent() {
             </div>
           )}
           <div className="flex justify-end gap-3 pt-6">
-            <button type="button" onClick={resetForms} className="px-6 py-2 text-gray-500 hover:text-gray-700 font-bold">{t('common.cancel')}</button>
-            <button type="submit" className="px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold shadow-lg">{t('common.save')}</button>
+            <button
+              type="button"
+              onClick={resetForms}
+              disabled={isActionLoading}
+              className="px-6 py-2 text-gray-500 hover:text-gray-700 font-bold disabled:opacity-50"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type="submit"
+              disabled={isActionLoading}
+              className="px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold shadow-lg disabled:opacity-70 flex items-center gap-2 min-w-[100px] justify-center"
+            >
+              {isActionLoading ? (
+                <LoadingSpinner size="small" color="white" text={editingId ? 'Updating...' : 'Adding...'} />
+              ) : (
+                t('common.save')
+              )}
+            </button>
           </div>
         </form>
       </Modal>
