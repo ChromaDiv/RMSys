@@ -3,10 +3,13 @@ import { PrismaClient } from '@prisma/client';
 // Fix for BigInt serialization
 BigInt.prototype.toJSON = function () { return this.toString() };
 
-const DATABASE_URL = process.env.DATABASE_URL;
+// Hardcoded fallback for Hostinger deployment issues
+const FALLBACK_DATABASE_URL = "postgresql://postgres:Achaji31.,.@db.pjlifzwsxqbeetliyniw.supabase.co:5432/postgres";
 
-if (!DATABASE_URL) {
-  console.error("❌ DATABASE_URL is missing in environment variables!");
+const DATABASE_URL = process.env.DATABASE_URL || FALLBACK_DATABASE_URL;
+
+if (!process.env.DATABASE_URL) {
+  console.warn("⚠️ DATABASE_URL missing in env. Using Hardcoded Fallback.");
 } else {
   // Log masked URL for debugging (e.g. mysql://user:***@host:port/db)
   const maskedUrl = DATABASE_URL.replace(/:([^:@]+)@/, ':***@');
@@ -33,9 +36,16 @@ try {
   });
 } catch (e) {
   console.error("❌ CRITICAL: Failed to initialize PrismaClient:", e.message);
-  // Mock prisma to prevent module crash. Queries will fail inside route handlers (safe 500 JSON) instead of crashing app.
+
+  // Robust Mock to prevent "is not a function" errors
+  const mockModelChain = new Proxy({}, {
+    get: () => async () => {
+      throw new Error(`Prisma Client failed to initialize. DATABASE_URL: ${DATABASE_URL ? 'Present' : 'Missing'}`);
+    }
+  });
+
   prismaInstance = new Proxy({}, {
-    get: () => () => Promise.reject(new Error("Prisma Client failed to initialize. Check server logs."))
+    get: () => mockModelChain // Returns an object that has methods that throw
   });
 }
 
