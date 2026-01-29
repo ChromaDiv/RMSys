@@ -24,9 +24,16 @@ const getSupabase = () => {
   if (!key || key === 'undefined' || key === 'null' || key === '') key = FALLBACK_KEY;
 
   if (url && key) {
+    if (typeof window !== 'undefined') {
+      window.__SUPABASE_DEBUG__ = { status: 'initialized', url, build: 'Jan 30 03:25 AM' };
+    }
     console.log('✅ Supabase initialized successfully. URL:', url.substring(0, 15) + '...');
     _supabase = createClient(url, key);
     return _supabase;
+  }
+
+  if (typeof window !== 'undefined') {
+    window.__SUPABASE_DEBUG__ = { status: 'missing', build: 'Jan 30 03:25 AM' };
   }
 
   console.log('❌ Supabase Config missing. URL:', url ? 'Present' : 'Missing', 'Key:', key ? 'Present' : 'Missing');
