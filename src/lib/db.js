@@ -1,5 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 
+// Fix for BigInt serialization
+BigInt.prototype.toJSON = function () { return this.toString() };
+
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {

@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+// Removed top-level prisma import to prevent module-level crashes
+
+import { PrismaClient } from '@prisma/client';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -7,11 +11,30 @@ export async function GET() {
     let dbError = null;
 
     try {
-      // Try to connect/query
-      await prisma.$queryRaw`SELECT 1`;
-      dbStatus = 'CONNECTED';
+      // Try to connect/query using a local safe instance
+      const dbUrl = process.env.DATABASE_URL;
+      if (!dbUrl) {
+        throw new Error('DATABASE_URL is undefined in process.env');
+      }
+
+      // Instantiate locally to catch config errors
+      const prisma = new PrismaClient({
+        datasources: { db: { url: dbUrl } }
+      });
+
+      try {
+        await prisma.$queryRaw`SELECT 1`;
+        dbStatus = 'CONNECTED';
+        await prisma.$disconnect();
+      } catch (queryErr) {
+        dbStatus = 'FAILED';
+        dbError = queryErr.message;
+        // Attempt clean disconnect
+        try { await prisma.$disconnect(); } catch (e) { }
+      }
+
     } catch (e) {
-      dbStatus = 'FAILED';
+      dbStatus = 'CONFIG_ERROR';
       dbError = e.message;
     }
 
@@ -74,11 +97,12 @@ export async function GET() {
       },
       message: "Check env_check.SERVER_IP. Ensure this IP is whitelisted in Hostinger 'Remote MySQL'."
     });
+
   } catch (globalError) {
     return NextResponse.json({
       status: 'CRITICAL_FAILURE',
       error: globalError.message,
       stack: globalError.stack
-    }, { status: 200 }); // Return 200 to see the error JSON
+    }, { status: 200 });
   }
 }
