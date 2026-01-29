@@ -1,11 +1,6 @@
 import { cookies } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import { prisma } from '@/lib/db';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 export async function getAuthSession() {
   const cookieStore = await cookies();
