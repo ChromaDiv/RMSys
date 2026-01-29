@@ -10,6 +10,8 @@ if (!DATABASE_URL) {
   console.log("✅ Connecting to Database:", maskedUrl);
 }
 
+const globalForPrisma = globalThis;
+
 export const prisma = globalForPrisma.prisma || new PrismaClient({
   datasources: {
     db: {
