@@ -28,8 +28,13 @@ const getSupabase = () => {
       window.__SUPABASE_DEBUG__ = { status: 'initialized', url, build: 'Jan 30 03:25 AM' };
     }
     console.log('✅ Supabase initialized successfully. URL:', url.substring(0, 15) + '...');
-    _supabase = createClient(url, key);
-    return _supabase;
+    try {
+      _supabase = createClient(url, key);
+      return _supabase;
+    } catch (initError) {
+      console.error('❌ CRITICAL: Supabase createClient failed:', initError.message);
+      // Fall through to mock return below
+    }
   }
 
   if (typeof window !== 'undefined') {

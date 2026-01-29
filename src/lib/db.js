@@ -21,12 +21,24 @@ if (process.env.NODE_ENV !== 'production' && globalForPrisma.prisma && !globalFo
   delete globalForPrisma.prisma;
 }
 
-export const prisma = globalForPrisma.prisma || new PrismaClient({
-  datasources: {
-    db: {
-      url: DATABASE_URL,
+let prismaInstance;
+
+try {
+  prismaInstance = globalForPrisma.prisma || new PrismaClient({
+    datasources: {
+      db: {
+        url: DATABASE_URL,
+      },
     },
-  },
-});
+  });
+} catch (e) {
+  console.error("❌ CRITICAL: Failed to initialize PrismaClient:", e.message);
+  // Mock prisma to prevent module crash. Queries will fail inside route handlers (safe 500 JSON) instead of crashing app.
+  prismaInstance = new Proxy({}, {
+    get: () => () => Promise.reject(new Error("Prisma Client failed to initialize. Check server logs."))
+  });
+}
+
+export const prisma = prismaInstance;
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
