@@ -7,7 +7,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { motion } from 'framer-motion';
 import { Moon, Sun, User, Bell, Shield, ChevronRight, LogOut, CreditCard, Lock, Mail, CreditCard as CardIcon, Settings as SettingsIcon, DollarSign, Languages } from 'lucide-react';
 import Modal from '@/components/Modal';
-import { signOut } from 'next-auth/react';
+import { signOut } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 // ...

@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession } from '@/lib/server-auth';
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
     // 1. Fetch Categories
@@ -93,7 +92,7 @@ export async function GET() {
 export async function POST(request) {
   console.log('--- MENU POST REQUEST ---');
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     console.log('Session in POST:', JSON.stringify(session, null, 2));
 
     if (!session) {
@@ -148,7 +147,7 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
@@ -192,7 +191,7 @@ export async function PUT(request) {
 
 export async function DELETE(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession();
     if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
     const { searchParams } = new URL(request.url);

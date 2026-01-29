@@ -24,7 +24,12 @@ export function AuthProvider({ children }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false);
-      if (_event === 'SIGNED_OUT') {
+
+      // Sync cookie for server-side API routes
+      if (session?.access_token) {
+        document.cookie = `supa_token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax`;
+      } else if (_event === 'SIGNED_OUT' || !session) {
+        document.cookie = 'supa_token=; path=/; max-age=0';
         setLoading(false);
       }
     });
