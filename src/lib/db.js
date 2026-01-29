@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 BigInt.prototype.toJSON = function () { return this.toString() };
 
 // Hardcoded fallback for Hostinger deployment issues
-const FALLBACK_DATABASE_URL = "postgresql://postgres:Achaji31.,.@db.pjlifzwsxqbeetliyniw.supabase.co:5432/postgres";
+const FALLBACK_DATABASE_URL = "postgresql://postgres:Achaji31.%2C.@db.pjlifzwsxqbeetliyniw.supabase.co:5432/postgres";
 
 const DATABASE_URL = process.env.DATABASE_URL || FALLBACK_DATABASE_URL;
 
