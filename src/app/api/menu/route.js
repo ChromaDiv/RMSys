@@ -162,7 +162,7 @@ export async function PUT(request) {
 
     if (type === 'item') {
       await prisma.menu.update({
-        where: { id: data.id, userId: session.user.id },
+        where: { id: BigInt(data.id), userId: session.user.id },
         data: {
           name: data.name,
           price: Number(data.price),
@@ -216,9 +216,15 @@ export async function DELETE(request) {
         where: { name: categoryName, userId: session.user.id }
       });
     } else if (type === 'item') {
-      await prisma.menu.delete({
-        where: { id: parseInt(id), userId: session.user.id }
-      });
+      try {
+        await prisma.menu.delete({
+          where: { id: BigInt(id), userId: session.user.id }
+        });
+      } catch (e) {
+        // Fallback for string/int mismatch if needed, though BigInt(id) is correct for BigInt fields
+        console.error('Delete item error:', e);
+        throw e;
+      }
     }
 
     return NextResponse.json({ success: true, message: 'Deleted successfully' });
