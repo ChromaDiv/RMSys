@@ -14,6 +14,7 @@ export async function GET() {
 
     const data = orders.map(order => ({
       ...order,
+      id: order.id.toString(),
       total: Number(order.total)
     }));
 
@@ -49,6 +50,7 @@ export async function POST(request) {
       success: true,
       data: {
         ...newOrder,
+        id: newOrder.id.toString(),
         total: Number(newOrder.total)
       }
     });
@@ -66,7 +68,7 @@ export async function PUT(request) {
     const body = await request.json();
     const { id, status } = body;
     await prisma.order.update({
-      where: { id: parseInt(id), userId: session.user.id },
+      where: { id: BigInt(id), userId: session.user.id },
       data: { status }
     });
     return NextResponse.json({ success: true, message: 'Status updated' });
@@ -83,7 +85,7 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     await prisma.order.delete({
-      where: { id: parseInt(id), userId: session.user.id }
+      where: { id: BigInt(id), userId: session.user.id }
     });
     return NextResponse.json({ success: true, message: 'Deleted' });
   } catch (error) {

@@ -116,13 +116,18 @@ export async function POST(request) {
         }
       });
       console.log('Item created:', newItem);
+      // Explicitly serialize BigInt and Decimal to avoid serialization errors
+      const serializedItem = {
+        ...newItem,
+        id: newItem.id.toString(),
+        price: Number(newItem.price),
+        userId: undefined, // Don't leak userId if not needed
+      };
+
       return NextResponse.json({
         success: true,
         message: 'Item added',
-        data: {
-          ...newItem,
-          price: Number(newItem.price)
-        }
+        data: serializedItem
       });
     }
 

@@ -13,6 +13,7 @@ export async function GET() {
     // Add critical/low status dynamically based on quantity
     const enrichedData = data.map(item => ({
       ...item,
+      id: item.id.toString(),
       status: Number(item.quantity) < 10 ? 'Critical' : (Number(item.quantity) < 20 ? 'Low' : 'Good'),
       quantity: Number(item.quantity)
     }));
@@ -38,7 +39,14 @@ export async function POST(request) {
         status: body.status || 'Good'
       }
     });
-    return NextResponse.json({ success: true, data: newItem });
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...newItem,
+        id: newItem.id.toString(),
+        quantity: Number(newItem.quantity)
+      }
+    });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
@@ -61,7 +69,7 @@ export async function PUT(request) {
     if (data.status !== undefined) updateData.status = data.status;
 
     await prisma.inventory.update({
-      where: { id: parseInt(id), userId: session.user.id },
+      where: { id: BigInt(id), userId: session.user.id },
       data: updateData
     });
     return NextResponse.json({ success: true, message: 'Updated' });
@@ -78,7 +86,7 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     await prisma.inventory.delete({
-      where: { id: parseInt(id), userId: session.user.id }
+      where: { id: BigInt(id), userId: session.user.id }
     });
     return NextResponse.json({ success: true, message: 'Deleted' });
   } catch (error) {
