@@ -12,9 +12,13 @@ let _supabase = null;
 const getSupabase = () => {
   if (_supabase) return _supabase;
 
-  // Re-read from process.env to pick up inlined values from next.config.mjs at runtime
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // 1. Try to read from environment (preferred)
+  let url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  let key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // 2. Nuclear Option: Hardcoded fallbacks specifically for Hostinger environment issues
+  if (!url) url = 'https://pjlifzwsxqbeetliyniw.supabase.co';
+  if (!key) key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqbGlmendzeHFiZWV0bGl5bml3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNDkxOTQsImV4cCI6MjA4NDkyNTE5NH0.SNc3py6WkJozjskchIdq2oAmftSB2kmoRd_2eU1GsZQ';
 
   if (url && key) {
     console.log('✅ Supabase initialized successfully. URL:', url.substring(0, 15) + '...');
