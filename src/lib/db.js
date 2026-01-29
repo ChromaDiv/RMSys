@@ -1,8 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 
-const globalForPrisma = global;
+const DATABASE_URL = process.env.DATABASE_URL;
 
-const DATABASE_URL = process.env.DATABASE_URL || "mysql://u384758686_RMSys:Migrate312026@srv2092.hstgr.io:3306/u384758686_RMSys";
+if (!DATABASE_URL) {
+  console.error("❌ DATABASE_URL is missing in environment variables!");
+} else {
+  // Log masked URL for debugging (e.g. mysql://user:***@host:port/db)
+  const maskedUrl = DATABASE_URL.replace(/:([^:@]+)@/, ':***@');
+  console.log("✅ Connecting to Database:", maskedUrl);
+}
 
 export const prisma = globalForPrisma.prisma || new PrismaClient({
   datasources: {

@@ -50,8 +50,8 @@ export default function SignupPage() {
       }
 
       if (!res.ok) {
-        // Prefer the detailed 'error' field if available, otherwise 'message'
-        const errorMessage = data.error || data.message || 'Something went wrong';
+        // Show detailed error if available
+        const errorMessage = data.details || data.error || data.message || 'Something went wrong';
         throw new Error(errorMessage);
       }
 

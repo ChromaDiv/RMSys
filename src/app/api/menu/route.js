@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -94,8 +94,10 @@ export async function POST(request) {
   console.log('--- MENU POST REQUEST ---');
   try {
     const session = await getServerSession(authOptions);
+    console.log('Session in POST:', JSON.stringify(session, null, 2));
+
     if (!session) {
-      console.log('Menu POST: Unauthorized');
+      console.log('Menu POST: Unauthorized - No Session');
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -104,6 +106,7 @@ export async function POST(request) {
     const { type, data } = body;
 
     if (type === 'item') {
+      console.log('Creating Item with userId:', session.user.id);
       const newItem = await prisma.menu.create({
         data: {
           userId: session.user.id,
@@ -113,23 +116,33 @@ export async function POST(request) {
           category: data.categoryName || 'General',
         }
       });
-
+      console.log('Item created:', newItem);
       return NextResponse.json({ success: true, message: 'Item added', data: newItem });
     }
 
     if (type === 'category') {
+      console.log('Creating Category:', data.newName, 'for user:', session.user.id);
+
+      // Validation
+      if (!data.newName || data.newName.trim() === '') {
+        console.log('Category name missing');
+        return NextResponse.json({ success: false, message: 'Category name is required' }, { status: 400 });
+      }
+
       const newCategory = await prisma.category.create({
         data: {
           userId: session.user.id,
           name: data.newName,
         }
       });
+      console.log('Category created:', newCategory);
       return NextResponse.json({ success: true, message: 'Category added', data: newCategory });
     }
 
     return NextResponse.json({ success: false, message: 'Invalid type' }, { status: 400 });
   } catch (error) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    console.error('MENU POST ERROR DETAILS:', error);
+    return NextResponse.json({ success: false, message: error.message, details: error.toString() }, { status: 500 });
   }
 }
 
