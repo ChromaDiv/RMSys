@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
 import { ArrowRight, CheckCircle, BarChart3, Truck, Users, ChevronRight } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
 import { useLanguage } from '@/context/LanguageContext';
@@ -17,13 +17,19 @@ export default function LandingPage() {
   const [authView, setAuthView] = useState('login');
   const [isScrolled, setIsScrolled] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10); // Start animating almost immediately
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const { scrollY } = useScroll();
+  const width = useTransform(scrollY, [0, 100], ['95%', '92%']);
+  const maxWidth = useTransform(scrollY, [0, 100], ['1400px', '1000px']);
+  const height = useTransform(scrollY, [0, 100], [80, 60]);
+  const backgroundColor = useTransform(
+    scrollY,
+    [0, 100],
+    ['rgba(255, 255, 255, 0.6)', 'rgba(255, 255, 255, 0.9)']
+  );
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setIsScrolled(latest > 10);
+  });
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'ar' : 'en');
@@ -45,15 +51,14 @@ export default function LandingPage() {
       {/* Navbar */}
       <motion.nav
         initial={{ width: '95%', maxWidth: '1400px', y: 20, borderRadius: 50 }}
-        animate={{
-          width: isScrolled ? '92%' : '90%',
-          maxWidth: isScrolled ? '1000px' : '1200px',
-          height: isScrolled ? 60 : 80, // Shrink vertically
-          y: isScrolled ? 20 : 20,
+        style={{
+          width,
+          maxWidth,
+          height,
+          y: 20,
           borderRadius: 50,
         }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-all duration-700 overflow-hidden ${isScrolled ? 'bg-white/90 dark:bg-white/10 shadow-xl shadow-black/5 dark:shadow-none border-black/10 dark:border-white/10' : 'bg-white/60 dark:bg-white/5 border-black/5 dark:border-white/10 shadow-sm shadow-black/5 dark:shadow-none'}`}
+        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-[box-shadow,background-color,border-color] duration-300 overflow-hidden ${isScrolled ? 'bg-white/90 dark:bg-white/10 shadow-xl shadow-black/5 dark:shadow-none border-black/10 dark:border-white/10' : 'bg-white/60 dark:bg-white/5 border-black/5 dark:border-white/10 shadow-sm shadow-black/5 dark:shadow-none'}`}
       >
         <div className="w-full mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
