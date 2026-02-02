@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx prisma generate && next build && cp -r public .next/standalone/ && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static",
-    "start": "node .next/standalone/server.js",
+    "build": "rm -rf .next && npx prisma generate && next build",
+    "start": "next start",
     "postinstall": "npx prisma generate"
   },
   "dependencies": {
