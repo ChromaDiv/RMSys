@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import SubscriptionModal from '@/components/SubscriptionModal';
 import { Crown, Zap } from 'lucide-react';
 import { useEffect } from 'react';
+import { useDemo } from '@/context/DemoContext';
 
 // ...
 
@@ -20,6 +21,7 @@ export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const { currency, setCurrency, currencies } = useCurrency();
   const { language, setLanguage, t } = useLanguage();
+  const { isDemo } = useDemo();
   const [activeModal, setActiveModal] = useState(null);
 
   // Subscription State
@@ -55,7 +57,7 @@ export default function SettingsPage() {
         {
           icon: Crown,
           label: 'Current Plan',
-          desc: subscription?.subscription === 'Pro' ? 'Pro Plan (Unlimited)' : 'Free Plan (Limited)',
+          desc: isDemo ? 'Demo Mode (Sandbox)' : (subscription?.subscription === 'Pro' ? 'Pro Plan (Unlimited)' : 'Free Plan (Limited)'),
           action: (
             <button
               onClick={() => setShowUpgradeModal(true)}
@@ -68,7 +70,7 @@ export default function SettingsPage() {
             </button>
           )
         },
-        ...(subscription?.subscription !== 'Pro' ? [{
+        ...((subscription?.subscription !== 'Pro' && !isDemo) ? [{
           icon: Zap,
           label: 'Plan Usage',
           desc: 'View your current limits',
