@@ -26,6 +26,8 @@ export const translations = {
       confirm: 'Confirm',
       search: 'Search...',
       or: 'OR',
+      loggingOut: 'Logging out...',
+      exitingDemo: 'Exiting Demo...',
     },
     dashboard: {
       title: 'Dashboard',
@@ -404,6 +406,8 @@ export const translations = {
       confirm: 'تأكيد',
       search: 'بحث...',
       or: 'أو',
+      loggingOut: 'جاري تسجيل الخروج...',
+      exitingDemo: 'جاري الخروج من العرض...',
     },
     dashboard: {
       title: 'لوحة التحكم',

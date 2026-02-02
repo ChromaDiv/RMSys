@@ -243,7 +243,7 @@ const Sidebar = () => {
 
   return (
     <>
-      {isLoggingOut && <LoadingSpinner fullPage text="Logging out..." />}
+      {isLoggingOut && <LoadingSpinner fullPage text={isDemo ? t('common.exitingDemo') : t('common.loggingOut')} />}
       {/* Mobile Header Bar */}
       <div className="md:hidden fixed top-10 left-4 right-4 h-16 bg-white/70 dark:bg-black/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full z-[100] flex items-center justify-between px-6 shadow-xl">
         {/* Mobile Branding */}
