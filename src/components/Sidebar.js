@@ -12,6 +12,7 @@ import { useSession, signOut } from '@/context/AuthContext';
 import clsx from 'clsx';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import LoadingSpinner from './LoadingSpinner';
+import { supabase } from '@/lib/supabase';
 
 const SidebarContent = ({
   isSidebarOpen,
@@ -228,23 +229,27 @@ const Sidebar = () => {
   const handleExitOrLogout = async () => {
     setIsLoggingOut(true);
 
-    // Safety timeout: If logout hangs for more than 5s, force redirect
+    // Safety timeout: Make it shorter (3s) and use replace to ensure hard navigation
     const safetyTimeout = setTimeout(() => {
-      window.location.href = '/';
-    }, 5000);
+      console.warn("Logout process timed out, forcing redirect...");
+      window.location.replace('/');
+    }, 3000);
 
     try {
       if (isDemo) {
         setDemo(false);
-        router.push('/');
+        // Explicitly clear demo persistence if needed, though context handles it
       } else {
-        await signOut({ callbackUrl: '/' });
+        // Call supabase directly to catch any specific network issues
+        const { error } = await supabase.auth.signOut();
+        if (error) console.error("Supabase signOut error:", error);
       }
-      clearTimeout(safetyTimeout);
     } catch (error) {
-      console.error('Logout error:', error);
-      setIsLoggingOut(false);
+      console.error('Logout Exception:', error);
+    } finally {
+      // ALWAYS redirect, regardless of success/failure
       clearTimeout(safetyTimeout);
+      window.location.replace('/');
     }
   };
 
