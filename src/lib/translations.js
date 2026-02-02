@@ -105,6 +105,25 @@ export const translations = {
           orders: 'Orders'
         }
       },
+      subscriptionModal: {
+        yourProPlan: 'Your Pro Plan',
+        unlockProFeatures: 'Unlock Pro Features',
+        proMemberTitle: "You're a Pro Member!",
+        upgradeToProTitle: 'Upgrade to Pro',
+        proMemberDesc: 'Your business is powered by unlimited access and priority features. Keep growing!',
+        freeMemberDesc: "You've reached the limit of the Free plan. Upgrade to unlock unlimited possibilities.",
+        features: {
+          menuCategories: 'Unlimited Menu Categories',
+          menuItems: 'Unlimited Menu Items',
+          supplyChain: 'Unlimited Supply Chain Items',
+          ordersCustomers: 'Unlimited Orders & Customers',
+          prioritySupport: 'Priority Performance & Support'
+        },
+        close: 'Close',
+        processing: 'Processing Payment...',
+        success: 'Successfully Upgraded!',
+        upgradeNow: 'Upgrade Now for $29/mo'
+      }
     },
     data: {
       categories: {},

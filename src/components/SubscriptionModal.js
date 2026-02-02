@@ -4,11 +4,13 @@ import { useState } from 'react';
 import Modal from '@/components/Modal';
 import { Check, Sparkles, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function SubscriptionModal({ isOpen, onClose, currentPlan = 'Free' }) {
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
+  const { t } = useLanguage();
 
   const isPro = currentPlan === 'Pro';
 
@@ -38,7 +40,7 @@ export default function SubscriptionModal({ isOpen, onClose, currentPlan = 'Free
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isPro ? "Your Pro Plan" : "Unlock Pro Features"}>
+    <Modal isOpen={isOpen} onClose={onClose} title={isPro ? t('subscriptionModal.yourProPlan') : t('subscriptionModal.unlockProFeatures')}>
       <div className="text-center space-y-6">
         <div className={`w-20 h-20 rounded-3xl mx-auto flex items-center justify-center shadow-xl ${isPro ? 'bg-gradient-to-tr from-amber-400 to-orange-500 shadow-orange-500/30' : 'bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-indigo-500/30'}`}>
           <Sparkles className="text-white w-10 h-10 animate-pulse" />
@@ -46,12 +48,12 @@ export default function SubscriptionModal({ isOpen, onClose, currentPlan = 'Free
 
         <div className="space-y-2">
           <h2 className="text-2xl font-black text-gray-900 dark:text-white">
-            {isPro ? "You're a Pro Member!" : "Upgrade to Pro"}
+            {isPro ? t('subscriptionModal.proMemberTitle') : t('subscriptionModal.upgradeToProTitle')}
           </h2>
           <p className="text-gray-500 dark:text-gray-400 font-medium px-4">
             {isPro
-              ? "Your business is powered by unlimited access and priority features. Keep growing!"
-              : "You've reached the limit of the Free plan. Upgrade to unlock unlimited possibilities."}
+              ? t('subscriptionModal.proMemberDesc')
+              : t('subscriptionModal.freeMemberDesc')}
           </p>
         </div>
 
@@ -60,31 +62,31 @@ export default function SubscriptionModal({ isOpen, onClose, currentPlan = 'Free
             <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
               <Check size={14} strokeWidth={3} />
             </div>
-            <span className="text-gray-700 dark:text-gray-200 font-bold">Unlimited Menu Categories</span>
+            <span className="text-gray-700 dark:text-gray-200 font-bold">{t('subscriptionModal.features.menuCategories')}</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
               <Check size={14} strokeWidth={3} />
             </div>
-            <span className="text-gray-700 dark:text-gray-200 font-bold">Unlimited Menu Items</span>
+            <span className="text-gray-700 dark:text-gray-200 font-bold">{t('subscriptionModal.features.menuItems')}</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
               <Check size={14} strokeWidth={3} />
             </div>
-            <span className="text-gray-700 dark:text-gray-200 font-bold">Unlimited Supply Chain Items</span>
+            <span className="text-gray-700 dark:text-gray-200 font-bold">{t('subscriptionModal.features.supplyChain')}</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
               <Check size={14} strokeWidth={3} />
             </div>
-            <span className="text-gray-700 dark:text-gray-200 font-bold">Unlimited Orders & Customers</span>
+            <span className="text-gray-700 dark:text-gray-200 font-bold">{t('subscriptionModal.features.ordersCustomers')}</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
               <Check size={14} strokeWidth={3} />
             </div>
-            <span className="text-gray-700 dark:text-gray-200 font-bold">Priority Performance & Support</span>
+            <span className="text-gray-700 dark:text-gray-200 font-bold">{t('subscriptionModal.features.prioritySupport')}</span>
           </div>
         </div>
 
@@ -93,7 +95,7 @@ export default function SubscriptionModal({ isOpen, onClose, currentPlan = 'Free
             onClick={onClose}
             className="w-full py-4 bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-xl font-bold text-lg hover:bg-gray-200 dark:hover:bg-white/20 transition-all"
           >
-            Close
+            {t('subscriptionModal.close')}
           </button>
         ) : (
           <button
@@ -104,16 +106,16 @@ export default function SubscriptionModal({ isOpen, onClose, currentPlan = 'Free
               : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98]'}`}
           >
             {loading ? (
-              <span className="animate-pulse text-sm">Processing Payment...</span>
+              <span className="animate-pulse text-sm">{t('subscriptionModal.processing')}</span>
             ) : isSuccess ? (
               <>
                 <Check size={20} strokeWidth={3} />
-                Successfully Upgraded!
+                {t('subscriptionModal.success')}
               </>
             ) : (
               <>
                 <Zap size={20} className="fill-white" />
-                Upgrade Now for $29/mo
+                {t('subscriptionModal.upgradeNow')}
               </>
             )}
           </button>
