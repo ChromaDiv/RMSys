@@ -119,12 +119,12 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
           >
-            <div className="glass-card rounded-3xl overflow-hidden shadow-2xl bg-[#111] border border-white/10 relative">
+            <div className="glass-card rounded-3xl overflow-hidden shadow-2xl bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 relative">
 
               {/* Close Button */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors z-10"
+                className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors z-10"
               >
                 <X size={20} />
               </button>
@@ -136,7 +136,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
                       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
-                  <h2 className="text-2xl font-bold text-white">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                     {view === 'login' ? t('auth.login.title') : t('auth.signup.title')}
                   </h2>
                   <p className="text-gray-400 text-sm mt-1">
@@ -145,14 +145,14 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
                 </div>
 
                 {error && (
-                  <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm font-medium flex items-start gap-3">
+                  <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-rose-600 dark:text-rose-400 text-sm font-medium flex items-start gap-3">
                     <AlertCircle className="shrink-0 mt-0.5" size={18} />
                     <span>{error}</span>
                   </div>
                 )}
 
                 {success && (
-                  <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-sm font-medium flex items-start gap-3">
+                  <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl text-emerald-600 dark:text-emerald-400 text-sm font-medium flex items-start gap-3">
                     <CheckCircle2 className="shrink-0 mt-0.5" size={18} />
                     <span>{success}</span>
                   </div>
@@ -168,7 +168,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
                           type="text"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          className="w-full pl-12 p-3.5 rounded-xl bg-black/40 border border-white/10 text-white focus:border-indigo-500 outline-none transition-all"
+                          className="w-full pl-12 p-3.5 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 outline-none transition-all"
                           placeholder={t('auth.signup.namePlaceholder')}
                           required
                         />
@@ -184,7 +184,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-12 p-3.5 rounded-xl bg-black/40 border border-white/10 text-white focus:border-indigo-500 outline-none transition-all"
+                        className="w-full pl-12 p-3.5 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 outline-none transition-all"
                         placeholder={t('auth.login.emailPlaceholder')}
                         required
                       />
@@ -199,7 +199,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 p-3.5 rounded-xl bg-black/40 border border-white/10 text-white focus:border-indigo-500 outline-none transition-all"
+                        className="w-full pl-12 p-3.5 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 outline-none transition-all"
                         placeholder={t('auth.login.passwordPlaceholder')}
                         required
                       />
@@ -216,12 +216,12 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
                 </form>
 
 
-                <div className="text-center mt-6 pt-6 border-t border-white/10">
+                <div className="text-center mt-6 pt-6 border-t border-gray-100 dark:border-white/10">
                   <p className="text-sm text-gray-500">
                     {view === 'login' ? t('auth.login.noAccount') : t('auth.signup.hasAccount')}{' '}
                     <button
                       onClick={() => setView(view === 'login' ? 'signup' : 'login')}
-                      className="text-white font-bold hover:underline ml-1"
+                      className="text-indigo-600 dark:text-white font-bold hover:underline ml-1"
                     >
                       {view === 'login' ? t('auth.login.createAccount') : t('auth.signup.logIn')}
                     </button>

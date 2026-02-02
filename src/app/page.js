@@ -39,7 +39,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-background text-foreground selection:bg-indigo-500/30">
 
       {/* Navbar */}
       {/* Navbar */}
@@ -52,11 +52,11 @@ export default function LandingPage() {
           borderRadius: 50,
         }}
         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-        className={`fixed z-[1000] left-0 right-0 mx-auto transition-colors duration-300 ${isScrolled ? 'bg-white/10 border border-white/20 backdrop-blur-xl shadow-2xl shadow-indigo-500/10' : 'bg-white/5 border border-white/10 backdrop-blur-md'}`}
+        className={`fixed z-[1000] left-0 right-0 mx-auto transition-colors duration-300 ${isScrolled ? 'bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/20 backdrop-blur-xl shadow-2xl shadow-indigo-500/10' : 'bg-white/50 dark:bg-white/5 border border-white/10 backdrop-blur-md'}`}
       >
         <div className="w-full mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -66,14 +66,14 @@ export default function LandingPage() {
           <div className="flex items-center gap-1.5 md:gap-6">
             <button
               onClick={toggleLanguage}
-              className="w-7 h-7 md:w-10 md:h-10 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] md:text-sm transition-all flex items-center justify-center border border-white/10 shrink-0"
+              className="w-7 h-7 md:w-10 md:h-10 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-900 dark:text-white font-bold text-[10px] md:text-sm transition-all flex items-center justify-center border border-gray-200 dark:border-white/10 shrink-0"
             >
               {language === 'en' ? 'AR' : 'EN'}
             </button>
-            <button onClick={() => openAuth('login')} className="text-xs md:text-sm font-bold text-gray-400 hover:text-white transition-colors px-2 shrink-0">
+            <button onClick={() => openAuth('login')} className="text-xs md:text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-2 shrink-0">
               {t('landing.nav.logIn')}
             </button>
-            <button onClick={() => openAuth('signup')} className="px-3 py-1.5 md:px-5 md:py-2.5 bg-white text-black rounded-full text-xs md:text-sm font-bold hover:bg-gray-200 transition-colors whitespace-nowrap shrink-0">
+            <button onClick={() => openAuth('signup')} className="px-3 py-1.5 md:px-5 md:py-2.5 bg-gray-900 dark:bg-white text-white dark:text-black rounded-full text-xs md:text-sm font-bold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors whitespace-nowrap shrink-0">
               {t('landing.nav.getStarted')}
             </button>
           </div>
@@ -94,7 +94,7 @@ export default function LandingPage() {
             <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-tight">
               {t('landing.hero.titlePart1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{t('landing.hero.titlePart2')}</span>
             </h1>
-            <p className="text-xl text-gray-400 md:max-w-2xl mx-auto mb-10 leading-relaxed">
+            <p className="text-xl text-gray-600 dark:text-gray-400 md:max-w-2xl mx-auto mb-10 leading-relaxed">
               {t('landing.hero.subtitle')}
             </p>
             <div className="flex flex-col md:flex-row items-center justify-center gap-4">
@@ -106,7 +106,7 @@ export default function LandingPage() {
               </button>
               <button
                 onClick={handleDemoClick}
-                className="px-8 py-3.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold backdrop-blur-md transition-all flex items-center gap-2 group"
+                className="px-8 py-3.5 rounded-full bg-white/50 dark:bg-white/10 hover:bg-white/80 dark:hover:bg-white/20 border border-gray-200 dark:border-white/20 text-gray-900 dark:text-white font-bold backdrop-blur-md transition-all flex items-center gap-2 group"
               >
                 {t('landing.hero.viewDemo')}
                 <ChevronRight className={`w-4 h-4 transition-transform ${language === 'ar' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
@@ -190,7 +190,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-10 border-t border-white/5 text-center text-gray-500 text-sm">
+      <footer className="py-10 border-t border-gray-200 dark:border-white/5 text-center text-gray-500 text-sm">
         <p>{t('landing.footer')}</p>
       </footer>
 
@@ -210,13 +210,13 @@ function FeatureCard({ icon: Icon, title, desc, delay }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay }}
-      className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-indigo-500/50 transition-colors group"
+      className="p-8 rounded-3xl bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-indigo-500/50 transition-colors group"
     >
-      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:text-white group-hover:bg-indigo-500 transition-all mb-6">
+      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 dark:text-indigo-400 group-hover:text-white group-hover:bg-indigo-500 transition-all mb-6">
         <Icon size={24} />
       </div>
-      <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
-      <p className="text-gray-400 leading-relaxed">{desc}</p>
+      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{title}</h3>
+      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{desc}</p>
     </motion.div>
   );
 }
@@ -227,7 +227,7 @@ function PricingCard({ title, price, period, desc, features, popular, mostPopula
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className={`p-8 rounded-3xl border flex flex-col relative overflow-hidden ${popular ? 'bg-indigo-600 border-indigo-500 scale-105 shadow-2xl shadow-indigo-500/20 z-10' : 'bg-white/5 border-white/10 hover:border-white/20 transition-colors'}`}
+      className={`p-8 rounded-3xl border flex flex-col relative overflow-hidden ${popular ? 'bg-indigo-600 border-indigo-500 scale-105 shadow-2xl shadow-indigo-500/20 z-10' : 'bg-white/50 dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-indigo-300 dark:hover:border-white/20 transition-colors'}`}
     >
       {popular && (
         <div className="absolute top-0 right-0 bg-white/20 px-3 py-1 text-xs font-bold rounded-bl-xl text-white">
@@ -235,11 +235,11 @@ function PricingCard({ title, price, period, desc, features, popular, mostPopula
         </div>
       )}
 
-      <h3 className={`text-xl font-bold mb-2 ${popular ? 'text-white' : 'text-white'}`}>{title}</h3>
-      <p className={`text-sm mb-6 ${popular ? 'text-indigo-100' : 'text-gray-400'}`}>{desc}</p>
+      <h3 className={`text-xl font-bold mb-2 ${popular ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{title}</h3>
+      <p className={`text-sm mb-6 ${popular ? 'text-indigo-100' : 'text-gray-500 dark:text-gray-400'}`}>{desc}</p>
 
       <div className="flex items-baseline gap-1 mb-8">
-        <span className="text-4xl font-black">{price}</span>
+        <span className={`text-4xl font-black ${popular ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{price}</span>
         {period && <span className={`text-sm font-bold ${popular ? 'text-indigo-200' : 'text-gray-500'}`}>{period}</span>}
       </div>
 
@@ -247,14 +247,14 @@ function PricingCard({ title, price, period, desc, features, popular, mostPopula
         {features.map((feat, i) => (
           <li key={i} className="flex items-start gap-3 text-sm font-medium">
             <CheckCircle size={18} className={popular ? 'text-white' : 'text-indigo-500'} />
-            <span className={popular ? 'text-indigo-50' : 'text-gray-300'}>{feat}</span>
+            <span className={popular ? 'text-indigo-50' : 'text-gray-600 dark:text-gray-300'}>{feat}</span>
           </li>
         ))}
       </ul>
 
       <button
         onClick={onAction}
-        className={`w-full py-4 rounded-xl font-bold text-sm transition-all relative z-20 cursor-pointer ${popular ? 'bg-white text-indigo-600 hover:bg-gray-100' : 'bg-white/10 text-white hover:bg-white/20'}`}
+        className={`w-full py-4 rounded-xl font-bold text-sm transition-all relative z-20 cursor-pointer ${popular ? 'bg-white text-indigo-600 hover:bg-gray-100' : 'bg-white dark:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/20'}`}
       >
         {buttonText}
       </button>
