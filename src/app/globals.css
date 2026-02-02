@@ -24,8 +24,8 @@
 }
 
 :root {
-  /* Modern Subtle Gradient for Light Mode */
-  --background: radial-gradient(circle at 50% 0%, #f7f9fc, #edeff2);
+  /* Modern Subtle Gradient for Light Mode - Slightly richer for visibility */
+  --background: radial-gradient(circle at 50% 0%, #ffffff, #f0f4f8, #e2e8f0);
   --foreground: #2d2d2d;
   /* Softened from #1d1d1f */
 
@@ -40,8 +40,8 @@
 }
 
 .dark {
-  /* Deep Modern Gradient for Dark Mode */
-  --background: radial-gradient(circle at 50% 0%, #1a1a1c, #000000);
+  /* Deep Modern Gradient for Dark Mode - Richer spotlight */
+  --background: radial-gradient(circle at 50% 0%, #2a2a2e, #1a1a1c, #000000);
   --foreground: #f5f5f7;
 
   /* Premium Dark Glass */
