@@ -9,6 +9,9 @@ import { Moon, Sun, User, Bell, Shield, ChevronRight, LogOut, CreditCard, Lock, 
 import Modal from '@/components/Modal';
 import { signOut } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import SubscriptionModal from '@/components/SubscriptionModal';
+import { Crown, Zap } from 'lucide-react';
+import { useEffect } from 'react';
 
 // ...
 
@@ -19,6 +22,26 @@ export default function SettingsPage() {
   const { language, setLanguage, t } = useLanguage();
   const [activeModal, setActiveModal] = useState(null);
 
+  // Subscription State
+  const [subscription, setSubscription] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  useEffect(() => {
+    fetchSubscription();
+  }, []);
+
+  const fetchSubscription = async () => {
+    try {
+      const res = await fetch('/api/subscription/status');
+      const data = await res.json();
+      if (data.success) {
+        setSubscription(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleLogout = async () => {
 
     // 2. Clear Session
@@ -26,6 +49,40 @@ export default function SettingsPage() {
   };
 
   const sections = [
+    {
+      title: 'Subscription',
+      items: [
+        {
+          icon: Crown,
+          label: 'Current Plan',
+          desc: subscription?.subscription === 'Pro' ? 'Pro Plan (Unlimited)' : 'Free Plan (Limited)',
+          action: (
+            <button
+              onClick={() => setShowUpgradeModal(true)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${subscription?.subscription === 'Pro'
+                ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg shadow-orange-500/30'
+                : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 animate-pulse'
+                }`}
+            >
+              {subscription?.subscription === 'Pro' ? 'Manage Subscription' : 'Upgrade to Pro'}
+            </button>
+          )
+        },
+        ...(subscription?.subscription !== 'Pro' ? [{
+          icon: Zap,
+          label: 'Plan Usage',
+          desc: 'View your current limits',
+          action: (
+            <div className="flex flex-col gap-1 text-xs text-right text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+              <span>Menu Items: {subscription?.usage?.menuItems || 0} / 5</span>
+              <span>Inventory: {subscription?.usage?.inventory || 0} / 5</span>
+              <span>Suppliers: {subscription?.usage?.suppliers || 0} / 5</span>
+              <span>Orders: {subscription?.usage?.orders || 0} / 5</span>
+            </div>
+          )
+        }] : [])
+      ]
+    },
     {
       title: t('settings.account'),
       items: [
@@ -186,6 +243,13 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Subscription Modal */}
+      <SubscriptionModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentPlan={subscription?.subscription}
+      />
+
       {/* Modals */}
       <Modal
         isOpen={!!activeModal}
@@ -248,18 +312,28 @@ export default function SettingsPage() {
 
         {activeModal === 'billing' && (
           <div className="space-y-6">
-            <div className="glass-card p-6 rounded-2xl border border-indigo-200 dark:border-indigo-500/30 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-black">
+            <div className={`glass-card p-6 rounded-2xl border transition-all ${subscription?.subscription === 'Pro'
+              ? 'border-indigo-200 dark:border-indigo-500/30 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/20 dark:to-black'
+              : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5'}`}>
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-indigo-900 dark:text-white">{t('settings.proPlan')}</h3>
-                  <p className="text-sm text-indigo-600 dark:text-indigo-300">$29/month</p>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    {subscription?.subscription === 'Pro' ? t('settings.proPlan') : 'Free Plan'}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {subscription?.subscription === 'Pro' ? '$29/month' : '$0/month'}
+                  </p>
                 </div>
-                <span className="px-3 py-1 bg-indigo-600 text-white text-xs font-bold rounded-full">{t('settings.activePlan')}</span>
+                <span className={`px-3 py-1 text-white text-xs font-bold rounded-full ${subscription?.subscription === 'Pro' ? 'bg-indigo-600' : 'bg-gray-400'}`}>
+                  {t('settings.activePlan')}
+                </span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
-                <div className="w-3/4 h-full bg-indigo-500" />
+                <div className={`h-full ${subscription?.subscription === 'Pro' ? 'bg-indigo-500 w-full' : 'bg-gray-400 w-1/4'}`} />
               </div>
-              <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2 font-medium">{t('settings.nextBilling')}</p>
+              <p className="text-xs text-gray-400 mt-2 font-medium">
+                {subscription?.subscription === 'Pro' ? t('settings.nextBilling') : 'Upgrade to unlock all features'}
+              </p>
             </div>
 
             <div>

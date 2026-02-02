@@ -9,6 +9,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
 import { demoData } from '@/lib/demoData';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import SubscriptionModal from '@/components/SubscriptionModal';
 
 // Animation Variants
 const containerVariants = {
@@ -48,7 +49,9 @@ export default function SupplyChainPage() {
   const [newSupplier, setNewSupplier] = useState({ name: '', type: '', rating: '5.0', status: 'Active' });
   const [loading, setLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
+
   const [actionError, setActionError] = useState(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   // --- MENU INTEGRATION START ---
   // Unused in SupplyChainPage
@@ -102,6 +105,9 @@ export default function SupplyChainPage() {
           setNewItem({ item: '', quantity: '', unit: 'kg', supplier: '', status: 'Good' });
           setActionError(null);
         } else {
+          if (data.error === 'LIMIT_REACHED') {
+            setShowSubscriptionModal(true);
+          }
           setActionError(data.error || 'Failed to save inventory item.');
           setInventory(prev => prev.filter(item => item.id !== tempId));
         }
@@ -211,6 +217,12 @@ export default function SupplyChainPage() {
           setSuppliers([...suppliers, data.data]);
           setIsModalOpen(false);
           setNewSupplier({ name: '', type: '', rating: '5.0', status: 'Active' });
+        } else {
+          if (data.error === 'LIMIT_REACHED') {
+            setShowSubscriptionModal(true);
+          } else {
+            console.error('Failed to add supplier:', data.error);
+          }
         }
       } else {
         setSuppliers([...suppliers, { id: Date.now(), ...newSupplier }]);
@@ -753,6 +765,7 @@ export default function SupplyChainPage() {
       </Modal>
 
       <DemoSignupModal isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
+      <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => setShowSubscriptionModal(false)} />
     </motion.div>
   );
 }

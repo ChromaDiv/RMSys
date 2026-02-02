@@ -24,14 +24,28 @@ const Sidebar = () => {
   const { isCollapsed, toggleSidebar } = useSidebar();
   const { t } = useLanguage();
   const [userName, setUserName] = useState('Sohaib Latif');
+  const [subscription, setSubscription] = useState('Free'); // Default to Free
 
   const { isScrolled } = useScrollAnimation();
 
   useEffect(() => {
     if (session?.user) {
       setUserName(session.user.name || session.user.email?.split('@')[0] || 'Sohaib Latif');
+      fetchSubscription();
     }
   }, [session]);
+
+  const fetchSubscription = async () => {
+    try {
+      const res = await fetch('/api/subscription/status');
+      const data = await res.json();
+      if (data.success) {
+        setSubscription(data.subscription || 'Free');
+      }
+    } catch (e) {
+      console.error('Sidebar: Failed to fetch subscription', e);
+    }
+  };
 
   // Safety: Reset hover state if mouse leaves the window
   useEffect(() => {
@@ -206,10 +220,18 @@ const Sidebar = () => {
                 className="flex flex-col whitespace-nowrap overflow-hidden"
               >
                 <span className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
-                  {isDemo ? 'Demo Mode' : userName}
+                  {userName}
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {isDemo ? 'No Admin Access' : t('nav.adminAccess')}
+                <span className={clsx(
+                  "text-[10px] font-black flex items-center gap-1 uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                  isDemo
+                    ? "text-rose-600 bg-rose-500/10 border-rose-500/20"
+                    : subscription === 'Pro'
+                      ? "text-amber-600 bg-amber-500/10 border-amber-500/20"
+                      : "text-gray-500 bg-gray-500/10 border-gray-500/10"
+                )}>
+                  <Sparkles size={8} fill={(subscription === 'Pro' || isDemo) ? "currentColor" : "none"} />
+                  {isDemo ? (t('nav.demoMode') || 'Demo') : `${subscription} Plan`}
                 </span>
               </motion.div>
             )}

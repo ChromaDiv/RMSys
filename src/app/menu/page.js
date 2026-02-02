@@ -11,6 +11,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
 import { demoData } from '@/lib/demoData';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import SubscriptionModal from '@/components/SubscriptionModal';
 
 function MenuContent() {
   const { formatAmount } = useCurrency();
@@ -28,6 +29,7 @@ function MenuContent() {
   const [editingId, setEditingId] = useState(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   // ...
 
@@ -109,6 +111,9 @@ function MenuContent() {
         await fetchMenu();
         resetForms();
       } else {
+        if (data.error === 'LIMIT_REACHED') {
+          setShowSubscriptionModal(true);
+        }
         setActionError(data.error || data.message || 'Failed to save category');
       }
     } catch (e) {
@@ -141,6 +146,9 @@ function MenuContent() {
         await fetchMenu();
         resetForms();
       } else {
+        if (data.error === 'LIMIT_REACHED') {
+          setShowSubscriptionModal(true);
+        }
         setActionError(data.error || data.message || 'Failed to save item');
       }
     } catch (e) {
@@ -530,6 +538,7 @@ function MenuContent() {
       </Modal>
 
       <DemoSignupModal isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
+      <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => setShowSubscriptionModal(false)} />
     </div>
   );
 }

@@ -215,7 +215,6 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
                   </button>
                 </form>
 
-                {/* Google login removed */}
 
                 <div className="text-center mt-6 pt-6 border-t border-white/10">
                   <p className="text-sm text-gray-500">

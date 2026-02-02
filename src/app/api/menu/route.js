@@ -105,6 +105,21 @@ export async function POST(request) {
     const { type, data } = body;
 
     if (type === 'item') {
+      // Check Subscription Limit
+      const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+      const isPro = user?.subscription === 'Pro';
+
+      if (!isPro) {
+        const count = await prisma.menu.count({ where: { userId: session.user.id } });
+        if (count >= 5) {
+          return NextResponse.json({
+            success: false,
+            error: 'LIMIT_REACHED',
+            message: 'Free plan limit reached (5 items). Upgrade to Pro to add more.'
+          }, { status: 403 });
+        }
+      }
+
       console.log('Creating Item with userId:', session.user.id);
       const newItem = await prisma.menu.create({
         data: {
@@ -133,6 +148,21 @@ export async function POST(request) {
 
     if (type === 'category') {
       console.log('Creating Category:', data.newName, 'for user:', session.user.id);
+
+      // Check Subscription Limit
+      const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+      const isPro = user?.subscription === 'Pro';
+
+      if (!isPro) {
+        const count = await prisma.category.count({ where: { userId: session.user.id } });
+        if (count >= 5) {
+          return NextResponse.json({
+            success: false,
+            error: 'LIMIT_REACHED',
+            message: 'Free plan limit reached (5 categories). Upgrade to Pro to add more.'
+          }, { status: 403 });
+        }
+      }
 
       // Validation
       if (!data.newName || data.newName.trim() === '') {

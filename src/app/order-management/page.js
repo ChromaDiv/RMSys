@@ -11,6 +11,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
 import { demoData } from '@/lib/demoData';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import SubscriptionModal from '@/components/SubscriptionModal';
 
 function OrderManagementContent() {
   const { formatAmount } = useCurrency();
@@ -26,6 +27,7 @@ function OrderManagementContent() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [newOrder, setNewOrder] = useState({
     customer: '',
     phone: '',
@@ -190,6 +192,9 @@ function OrderManagementContent() {
           setIsModalOpen(false);
           setActionError(null);
         } else {
+          if (data.error === 'LIMIT_REACHED') {
+            setShowSubscriptionModal(true);
+          }
           console.error("Server failed to save order:", data.error);
           setActionError(data.error || 'Failed to save order to database.');
           setOrders(prev => prev.filter(o => o.id !== tempId));
@@ -566,6 +571,7 @@ function OrderManagementContent() {
       </Modal>
 
       <DemoSignupModal isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
+      <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => setShowSubscriptionModal(false)} />
     </div>
   );
 }

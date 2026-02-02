@@ -29,6 +29,22 @@ export async function POST(request) {
     if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
+
+    // Check Subscription Limit
+    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+    const isPro = user?.subscription === 'Pro';
+
+    if (!isPro) {
+      const count = await prisma.inventory.count({ where: { userId: session.user.id } });
+      if (count >= 5) {
+        return NextResponse.json({
+          success: false,
+          error: 'LIMIT_REACHED',
+          message: 'Free plan limit reached (5 items). Upgrade to Pro to add more.'
+        }, { status: 403 });
+      }
+    }
+
     const newItem = await prisma.inventory.create({
       data: {
         userId: session.user.id,

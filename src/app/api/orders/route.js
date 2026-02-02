@@ -36,6 +36,22 @@ export async function POST(request) {
 
     const body = await request.json();
     console.log('Order POST Body:', body);
+
+    // Check Subscription Limit
+    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+    const isPro = user?.subscription === 'Pro';
+
+    if (!isPro) {
+      const count = await prisma.order.count({ where: { userId: session.user.id } });
+      if (count >= 5) {
+        return NextResponse.json({
+          success: false,
+          error: 'LIMIT_REACHED',
+          message: 'Free plan limit reached (5 orders). Upgrade to Pro to add more.'
+        }, { status: 403 });
+      }
+    }
+
     const newOrder = await prisma.order.create({
       data: {
         userId: session.user.id,
