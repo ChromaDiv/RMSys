@@ -17,6 +17,7 @@ export default function LandingPage() {
   const [authView, setAuthView] = useState('login');
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const { scrollY } = useScroll();
   // Ultra-smooth physics settings: Higher mass = more inertia, Lower stiffness = softer spring
   const smoothScrollY = useSpring(scrollY, {
     mass: 0.5,
