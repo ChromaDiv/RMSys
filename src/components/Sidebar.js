@@ -82,6 +82,12 @@ const Sidebar = () => {
 
   const handleExitOrLogout = async () => {
     setIsLoggingOut(true);
+
+    // Safety timeout: If logout hangs for more than 5s, force redirect
+    const safetyTimeout = setTimeout(() => {
+      window.location.href = '/';
+    }, 5000);
+
     try {
       if (isDemo) {
         setDemo(false);
@@ -89,9 +95,11 @@ const Sidebar = () => {
       } else {
         await signOut({ callbackUrl: '/' });
       }
+      clearTimeout(safetyTimeout);
     } catch (error) {
       console.error('Logout error:', error);
       setIsLoggingOut(false);
+      clearTimeout(safetyTimeout);
     }
   };
 
