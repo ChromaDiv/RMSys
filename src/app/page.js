@@ -15,13 +15,12 @@ export default function LandingPage() {
   const { setDemo } = useDemo();
   const [authOpen, setAuthOpen] = useState(false);
   const [authView, setAuthView] = useState('login');
-  const [isScrolled, setIsScrolled] = useState(false);
 
   const { scrollY } = useScroll();
   // Ultra-smooth physics settings: Higher mass = more inertia, Lower stiffness = softer spring
   const smoothScrollY = useSpring(scrollY, {
-    mass: 1.0,
-    stiffness: 50,
+    mass: 0.7, // Reduced mass for less initial lag
+    stiffness: 80, // Increased stiffness for faster initial response
     damping: 20,
     restDelta: 0.001
   });
@@ -34,9 +33,7 @@ export default function LandingPage() {
   const y = useTransform(smoothScrollY, [0, 1200], [20, 35]); // Move down slightly as we scroll
   // Removed backgroundColor transform to allow CSS dark mode classes to work
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setIsScrolled(latest > 10);
-  });
+  // Removed backgroundColor transform to allow CSS dark mode classes to work
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'ar' : 'en');
@@ -65,7 +62,7 @@ export default function LandingPage() {
           y,
           borderRadius: 50,
         }}
-        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-[box-shadow,background-color,border-color] duration-500 overflow-hidden ${isScrolled ? 'bg-white/90 dark:bg-white/10 shadow-xl shadow-black/10 dark:shadow-none border-black/10 dark:border-white/10' : 'bg-white/70 dark:bg-white/5 border-black/10 dark:border-white/10 shadow-md shadow-black/5 dark:shadow-none'}`}
+        className="fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl duration-500 overflow-hidden bg-white/90 dark:bg-white/10 shadow-xl shadow-black/10 dark:shadow-none border-black/10 dark:border-white/10"
       >
         <div className="w-full mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
