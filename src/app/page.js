@@ -62,7 +62,7 @@ export default function LandingPage() {
           y,
           borderRadius: 50,
         }}
-        className="fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 overflow-hidden bg-white/90 dark:bg-white/10 shadow-xl shadow-black/10 dark:shadow-none border-black/10 dark:border-white/10"
+        className="fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 overflow-hidden bg-white/60 dark:bg-white/10 shadow-xl shadow-black/5 dark:shadow-none border-white/20 dark:border-white/10"
       >
         <div className="w-full mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
