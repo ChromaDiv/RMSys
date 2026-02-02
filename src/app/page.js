@@ -17,10 +17,10 @@ export default function LandingPage() {
   const [authView, setAuthView] = useState('login');
 
   const { scrollY } = useScroll();
-  // Tweak: Slightly faster (stiffness 90) and lighter (mass 0.5) for instant, smooth start
+  // Ultra-responsive smoothing: Low mass = instant start, High damping = no bounce
   const smoothScrollY = useSpring(scrollY, {
-    mass: 0.5,
-    stiffness: 90,
+    mass: 0.1,
+    stiffness: 120,
     damping: 20,
     restDelta: 0.001
   });
