@@ -88,6 +88,23 @@ export const translations = {
       currentlyIn: 'Currently in',
       mode: 'mode',
       activeCurrency: 'Active:',
+      subscription: {
+        title: 'Subscription',
+        currentPlan: 'Current Plan',
+        demoMode: 'Demo Mode (Sandbox)',
+        proPlanUnlimited: 'Pro Plan (Unlimited)',
+        freePlanLimited: 'Free Plan (Limited)',
+        manageSubscription: 'Manage Subscription',
+        upgradeToPro: 'Upgrade to Pro',
+        planUsage: 'Plan Usage',
+        viewLimits: 'View your current limits',
+        usage: {
+          menuItems: 'Menu Items',
+          inventory: 'Inventory',
+          suppliers: 'Suppliers',
+          orders: 'Orders'
+        }
+      },
     },
     data: {
       categories: {},
@@ -439,6 +456,23 @@ export const translations = {
       currentlyIn: 'حاليا في وضع',
       mode: '',
       activeCurrency: 'النشط:',
+      subscription: {
+        title: 'الاشتراك',
+        currentPlan: 'الخطة الحالية',
+        demoMode: 'وضع العرض (تجريبي)',
+        proPlanUnlimited: 'خطة احترافية (غير محدود)',
+        freePlanLimited: 'خطة مجانية (محدودة)',
+        manageSubscription: 'إدارة الاشتراك',
+        upgradeToPro: 'ترقية إلى برو',
+        planUsage: 'استخدام الخطة',
+        viewLimits: 'عرض الحدود الحالية',
+        usage: {
+          menuItems: 'عناصر القائمة',
+          inventory: 'المخزون',
+          suppliers: 'الموردين',
+          orders: 'الطلبات'
+        }
+      },
     },
     menu: {
       title: 'إدارة القائمة',

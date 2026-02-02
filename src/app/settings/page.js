@@ -52,12 +52,14 @@ export default function SettingsPage() {
 
   const sections = [
     {
-      title: 'Subscription',
+      title: t('settings.subscription.title'),
       items: [
         {
           icon: Crown,
-          label: 'Current Plan',
-          desc: isDemo ? 'Demo Mode (Sandbox)' : (subscription?.subscription === 'Pro' ? 'Pro Plan (Unlimited)' : 'Free Plan (Limited)'),
+          label: t('settings.subscription.currentPlan'),
+          desc: isDemo
+            ? t('settings.subscription.demoMode')
+            : (subscription?.subscription === 'Pro' ? t('settings.subscription.proPlanUnlimited') : t('settings.subscription.freePlanLimited')),
           action: (
             <button
               onClick={() => setShowUpgradeModal(true)}
@@ -66,20 +68,20 @@ export default function SettingsPage() {
                 : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 animate-pulse'
                 }`}
             >
-              {subscription?.subscription === 'Pro' ? 'Manage Subscription' : 'Upgrade to Pro'}
+              {subscription?.subscription === 'Pro' ? t('settings.subscription.manageSubscription') : t('settings.subscription.upgradeToPro')}
             </button>
           )
         },
         ...((subscription?.subscription !== 'Pro' && !isDemo) ? [{
           icon: Zap,
-          label: 'Plan Usage',
-          desc: 'View your current limits',
+          label: t('settings.subscription.planUsage'),
+          desc: t('settings.subscription.viewLimits'),
           action: (
             <div className="flex flex-col gap-1 text-xs text-right text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
-              <span>Menu Items: {subscription?.usage?.menuItems || 0} / 5</span>
-              <span>Inventory: {subscription?.usage?.inventory || 0} / 5</span>
-              <span>Suppliers: {subscription?.usage?.suppliers || 0} / 5</span>
-              <span>Orders: {subscription?.usage?.orders || 0} / 5</span>
+              <span>{t('settings.subscription.usage.menuItems')}: {subscription?.usage?.menuItems || 0} / 5</span>
+              <span>{t('settings.subscription.usage.inventory')}: {subscription?.usage?.inventory || 0} / 5</span>
+              <span>{t('settings.subscription.usage.suppliers')}: {subscription?.usage?.suppliers || 0} / 5</span>
+              <span>{t('settings.subscription.usage.orders')}: {subscription?.usage?.orders || 0} / 5</span>
             </div>
           )
         }] : [])
