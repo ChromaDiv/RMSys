@@ -100,6 +100,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
     <AnimatePresence>
       {loading && (
         <LoadingSpinner
+          key="loader"
           fullPage
           text={view === 'login' ? 'Signing In...' : 'Creating Account...'}
         />
@@ -107,6 +108,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
       {isOpen && (
         <>
           <motion.div
+            key="backdrop"
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[2000]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -114,6 +116,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
             onClick={onClose}
           />
           <motion.div
+            key="modal"
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-md z-[2001]"
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
