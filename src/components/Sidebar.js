@@ -117,7 +117,20 @@ const Sidebar = () => {
     collapsed: { width: '90px', transition: { duration: 0.2, ease: 'easeInOut' } }, // Instant close
   };
 
-  const SidebarContent = () => (
+  // Extracted SidebarContent to prevent re-renders and animation glitches
+  const SidebarContent = ({
+    isSidebarOpen,
+    navItems,
+    pathname,
+    handleExitOrLogout,
+    isDemo,
+    t,
+    userName,
+    subscription,
+    setIsMobileMenuOpen,
+    setIsHovered,
+    setIsLocked
+  }) => (
     <div className="flex flex-col p-4 transition-colors">
       <div className="hidden md:flex items-center gap-3 px-2 mb-6 mt-2">
         {/* Premium RMSys SVG Logo */}
@@ -191,6 +204,7 @@ const Sidebar = () => {
       <div className="mt-auto mb-2 pt-2">
         <AnimatePresence>
           <motion.button
+            layout // Added layout prop for smoother transitions between states
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
@@ -249,85 +263,195 @@ const Sidebar = () => {
     </div>
   );
 
-  return (
-    <>
-      {isLoggingOut && <LoadingSpinner fullPage text={isDemo ? t('common.exitingDemo') : t('common.loggingOut')} />}
-      {/* Mobile Header Bar */}
-      <div className="md:hidden fixed top-10 left-4 right-4 h-16 bg-white/70 dark:bg-black/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full z-[100] flex items-center justify-between px-6 shadow-xl">
-        {/* Mobile Branding */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 ring-2 ring-white/20">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+  const Sidebar = () => {
+    const pathname = usePathname();
+    const router = useRouter();
+    const { data: session } = useSession(); // Get session
+    const { isDemo, setDemo } = useDemo();
+    const [isHovered, setIsHovered] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const { isCollapsed, toggleSidebar } = useSidebar();
+    const { t } = useLanguage();
+    const [userName, setUserName] = useState('Sohaib Latif');
+    const [subscription, setSubscription] = useState('Free'); // Default to Free
+
+    const { isScrolled } = useScrollAnimation();
+
+    useEffect(() => {
+      if (session?.user) {
+        setUserName(session.user.name || session.user.email?.split('@')[0] || 'Sohaib Latif');
+        fetchSubscription();
+      }
+    }, [session]);
+
+    const fetchSubscription = async () => {
+      try {
+        const res = await fetch('/api/subscription/status');
+        const data = await res.json();
+        if (data.success) {
+          setSubscription(data.subscription || 'Free');
+        }
+      } catch (e) {
+        console.error('Sidebar: Failed to fetch subscription', e);
+      }
+    };
+
+    // Safety: Reset hover state if mouse leaves the window
+    useEffect(() => {
+      const handleWindowMouseLeave = () => setIsHovered(false);
+      window.addEventListener('mouseleave', handleWindowMouseLeave);
+      return () => window.removeEventListener('mouseleave', handleWindowMouseLeave);
+    }, []);
+
+    // Auto-close sidebar on route change (Mobile & Desktop Reset)
+    useEffect(() => {
+      setIsMobileMenuOpen(false);
+      setIsHovered(false);
+    }, [pathname]);
+
+    // Sidebar is open if strictly expanded (pinned) OR hovered OR mobile menu is active
+    const isSidebarOpen = !isCollapsed || isHovered || isMobileMenuOpen;
+
+    // Interaction Lock to prevent accidental re-expansion after clicking
+    const [isLocked, setIsLocked] = useState(false);
+
+    // Normalize pathname to handle trailing slashes or case sensitivity
+    const normalizedPath = pathname?.toLowerCase().replace(/\/$/, '') || '/';
+    const isPublicHeader = ['/', '/login', '/signup'].includes(normalizedPath);
+
+    if (isPublicHeader) return null;
+
+    const handleMouseEnter = () => {
+      if (!isLocked) setIsHovered(true);
+    };
+
+    const handleMouseLeave = () => {
+      setIsHovered(false);
+    };
+
+    const handleExitOrLogout = async () => {
+      setIsLoggingOut(true);
+
+      // Safety timeout: If logout hangs for more than 5s, force redirect
+      const safetyTimeout = setTimeout(() => {
+        window.location.href = '/';
+      }, 5000);
+
+      try {
+        if (isDemo) {
+          setDemo(false);
+          router.push('/');
+        } else {
+          await signOut({ callbackUrl: '/' });
+        }
+        clearTimeout(safetyTimeout);
+      } catch (error) {
+        console.error('Logout error:', error);
+        setIsLoggingOut(false);
+        clearTimeout(safetyTimeout);
+      }
+    };
+
+    const navItems = [
+      { name: t('nav.dashboard'), path: '/dashboard', icon: LayoutDashboard },
+      { name: t('nav.orderManagement'), path: '/order-management', icon: ClipboardList },
+      { name: t('nav.menu'), path: '/menu', icon: Menu },
+      { name: t('nav.supplyChain'), path: '/supply-chain', icon: Truck },
+      { name: t('nav.aiInsights'), path: '/ai-insights', icon: Sparkles },
+      { name: t('nav.settings'), path: '/settings', icon: Settings },
+    ];
+
+    return (
+      <>
+        {isLoggingOut && <LoadingSpinner fullPage text={isDemo ? t('common.exitingDemo') : t('common.loggingOut')} />}
+        {/* Mobile Header Bar */}
+        <div className="md:hidden fixed top-10 left-4 right-4 h-16 bg-white/70 dark:bg-black/60 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full z-[100] flex items-center justify-between px-6 shadow-xl">
+          {/* Mobile Branding */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 ring-2 ring-white/20">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <span className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-white dark:to-indigo-300">{t('common.rmsTitle')}</span>
           </div>
-          <span className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-white dark:to-indigo-300">{t('common.rmsTitle')}</span>
+
+          {/* Mobile Toggle Button */}
+          <button
+            className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center text-gray-900 dark:text-white shadow-sm"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
 
-        {/* Mobile Toggle Button */}
-        <button
-          className="w-12 h-12 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center text-gray-900 dark:text-white shadow-sm"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        {/* Desktop Sidebar */}
+        <motion.aside
+          className="hidden md:flex flex-col fixed top-10 ltr:left-4 rtl:right-4 z-50 shadow-2xl rounded-[50px] border border-white/20 dark:border-white/10 overflow-hidden bg-white/40 dark:bg-black/20 backdrop-blur-2xl max-h-[90vh]"
+          // Height is auto (fit-content)
+          animate={{
+            width: isSidebarOpen ? '280px' : '90px',
+            x: isScrolled ? 0 : 20
+          }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          initial={false}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Desktop Sidebar Overlay Backdrop - REMOVED to prevent blur on dashboard */}
-      {/* <AnimatePresence>
-        {isSidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden md:block"
-            onClick={() => setIsHovered(false)}
+          <SidebarContent
+            isSidebarOpen={isSidebarOpen}
+            navItems={navItems}
+            pathname={pathname}
+            handleExitOrLogout={handleExitOrLogout}
+            isDemo={isDemo}
+            t={t}
+            userName={userName}
+            subscription={subscription}
+            setIsMobileMenuOpen={setIsMobileMenuOpen}
+            setIsHovered={setIsHovered}
+            setIsLocked={setIsLocked}
           />
-        )}
-      </AnimatePresence> */}
 
-      {/* Desktop Sidebar */}
-      <motion.aside
-        className="hidden md:flex flex-col fixed top-10 ltr:left-4 rtl:right-4 z-50 shadow-2xl rounded-[50px] border border-white/20 dark:border-white/10 overflow-hidden bg-white/40 dark:bg-black/20 backdrop-blur-2xl max-h-[90vh]"
-        // Height is auto (fit-content)
-        animate={{
-          width: isSidebarOpen ? '280px' : '90px',
-          x: isScrolled ? 0 : 20
-        }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        initial={false}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <SidebarContent />
+        </motion.aside>
 
-      </motion.aside>
+        {/* Mobile Sidebar Overlay */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <>
+              <motion.div
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              />
+              <motion.aside
+                className="fixed top-28 left-4 right-4 bottom-auto max-h-[calc(100vh-140px)] z-50 md:hidden bg-white dark:bg-[#0f0f11] shadow-2xl rounded-[40px] flex flex-col overflow-hidden origin-top"
+                initial={{ opacity: 0, scaleY: 0.8, y: -20 }}
+                animate={{ opacity: 1, scaleY: 1, y: 0 }}
+                exit={{ opacity: 0, scaleY: 0.8, y: -20 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              >
+                <SidebarContent
+                  isSidebarOpen={isSidebarOpen}
+                  navItems={navItems}
+                  pathname={pathname}
+                  handleExitOrLogout={handleExitOrLogout}
+                  isDemo={isDemo}
+                  t={t}
+                  userName={userName}
+                  subscription={subscription}
+                  setIsMobileMenuOpen={setIsMobileMenuOpen}
+                  setIsHovered={setIsHovered}
+                  setIsLocked={setIsLocked}
+                />
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+      </>
+    );
+  };
 
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <motion.aside
-              className="fixed top-28 left-4 right-4 bottom-auto max-h-[calc(100vh-140px)] z-50 md:hidden bg-white dark:bg-[#0f0f11] shadow-2xl rounded-[40px] flex flex-col overflow-hidden origin-top"
-              initial={{ opacity: 0, scaleY: 0.8, y: -20 }}
-              animate={{ opacity: 1, scaleY: 1, y: 0 }}
-              exit={{ opacity: 0, scaleY: 0.8, y: -20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            >
-              <SidebarContent />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
-    </>
-  );
-};
-
-export default Sidebar;
+  export default Sidebar;
