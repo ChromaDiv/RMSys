@@ -17,20 +17,20 @@ export default function LandingPage() {
   const [authView, setAuthView] = useState('login');
 
   const { scrollY } = useScroll();
-  // Ultra-smooth physics settings: Higher mass = more inertia, Lower stiffness = softer spring
+  // Tweak: Slightly faster (stiffness 90) and lighter (mass 0.5) for instant, smooth start
   const smoothScrollY = useSpring(scrollY, {
-    mass: 0.7, // Reduced mass for less initial lag
-    stiffness: 80, // Increased stiffness for faster initial response
+    mass: 0.5,
+    stiffness: 90,
     damping: 20,
     restDelta: 0.001
   });
 
   // Map the smoothed scroll value to animation properties
-  // Extended range [0, 1200] makes the animation feel "extremely slow" and gradual
-  const width = useTransform(smoothScrollY, [0, 1200], ['95%', '92%']);
-  const maxWidth = useTransform(smoothScrollY, [0, 1200], ['1400px', '1000px']);
-  const height = useTransform(smoothScrollY, [0, 1200], [80, 60]);
-  const y = useTransform(smoothScrollY, [0, 1200], [20, 35]); // Move down slightly as we scroll
+  // Range [0, 700] is faster than 1200 but still gradual and smooth
+  const width = useTransform(smoothScrollY, [0, 700], ['95%', '92%']);
+  const maxWidth = useTransform(smoothScrollY, [0, 700], ['1400px', '1000px']);
+  const height = useTransform(smoothScrollY, [0, 700], [80, 60]);
+  const y = useTransform(smoothScrollY, [0, 700], [20, 35]); // Move down slightly as we scroll
   // Removed backgroundColor transform to allow CSS dark mode classes to work
 
   // Removed backgroundColor transform to allow CSS dark mode classes to work
