@@ -31,11 +31,7 @@ export default function LandingPage() {
   const width = useTransform(smoothScrollY, [0, 300], ['95%', '92%']);
   const maxWidth = useTransform(smoothScrollY, [0, 300], ['1400px', '1000px']);
   const height = useTransform(smoothScrollY, [0, 300], [80, 60]);
-  const backgroundColor = useTransform(
-    smoothScrollY,
-    [0, 300],
-    ['rgba(255, 255, 255, 0.6)', 'rgba(255, 255, 255, 0.9)']
-  );
+  // Removed backgroundColor transform to allow CSS dark mode classes to work
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > 10);
@@ -65,11 +61,10 @@ export default function LandingPage() {
           width,
           maxWidth,
           height,
-          backgroundColor, // Explicitly use the transformed smooth color
           y: 20,
           borderRadius: 50,
         }}
-        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-[box-shadow,border-color] duration-700 overflow-hidden ${isScrolled ? 'shadow-xl shadow-black/5 dark:shadow-none border-black/10 dark:border-white/10' : 'border-black/5 dark:border-white/10 shadow-sm shadow-black/5 dark:shadow-none'}`}
+        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-[box-shadow,background-color,border-color] duration-500 overflow-hidden ${isScrolled ? 'bg-white/90 dark:bg-white/10 shadow-xl shadow-black/10 dark:shadow-none border-black/10 dark:border-white/10' : 'bg-white/70 dark:bg-white/5 border-black/10 dark:border-white/10 shadow-md shadow-black/5 dark:shadow-none'}`}
       >
         <div className="w-full mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
