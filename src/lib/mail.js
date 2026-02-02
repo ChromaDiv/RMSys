@@ -1,6 +1,18 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend;
+
+function getResend() {
+  if (!resend) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.warn("⚠️ RESEND_API_KEY is missing. Email features will use console fallback.");
+      return null;
+    }
+    resend = new Resend(apiKey);
+  }
+  return resend;
+}
 
 export async function sendVerificationEmail(email, name, token) {
   const verifyUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify?token=${token}`;
@@ -8,8 +20,14 @@ export async function sendVerificationEmail(email, name, token) {
 
   console.log(`Attempting to send verification email to ${email} via Resend...`);
 
+  const client = getResend();
+
   try {
-    const { data, error } = await resend.emails.send({
+    if (!client) {
+      throw new Error("Resend client not initialized (missing API key)");
+    }
+
+    const { data, error } = await client.emails.send({
       from: `RMSys <${fromEmail}>`,
       to: [email],
       subject: 'Verify your RMSys account',
