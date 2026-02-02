@@ -10,6 +10,7 @@ export const translations = {
       adminAccess: 'Admin Access',
       exitDemo: 'Exit Demo Mode',
       logout: 'Logout',
+      demoMode: 'Demo Mode',
     },
     common: {
       rmsTitle: 'RMSys',
@@ -351,6 +352,7 @@ export const translations = {
       adminAccess: 'وصول المسؤول',
       exitDemo: 'خروج من العرض',
       logout: 'تسجيل الخروج',
+      demoMode: 'وضع العرض',
     },
     common: {
       rmsTitle: 'نظام المطعم',
