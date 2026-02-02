@@ -20,17 +20,20 @@
 
   --animate-blob: blob 20s infinite;
 
-  @keyframes blob {
+  @keyframes active-gradient {
     0% {
-      transform: translate3d(0px, 0px, 0px) scale(1);
+      transform: scale(1) translateY(0);
+      filter: hue-rotate(0deg) blur(60px);
     }
 
     50% {
-      transform: translate3d(30px, -50px, 0px) scale(1.05);
+      transform: scale(1.1) translateY(-10px);
+      filter: hue-rotate(15deg) blur(70px);
     }
 
     100% {
-      transform: translate3d(0px, 0px, 0px) scale(1);
+      transform: scale(1) translateY(0);
+      filter: hue-rotate(0deg) blur(60px);
     }
   }
 }
