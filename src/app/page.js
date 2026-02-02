@@ -18,12 +18,22 @@ export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   const { scrollY } = useScroll();
-  const width = useTransform(scrollY, [0, 100], ['95%', '92%']);
-  const maxWidth = useTransform(scrollY, [0, 100], ['1400px', '1000px']);
-  const height = useTransform(scrollY, [0, 100], [80, 60]);
+  // Add physics smoothing to the scroll value
+  const smoothScrollY = useSpring(scrollY, {
+    mass: 0.1,
+    stiffness: 100,
+    damping: 20,
+    restDelta: 0.001
+  });
+
+  // Map the smoothed scroll value to animation properties
+  // Extended range [0, 300] makes the animation feel "slower" and more gradual
+  const width = useTransform(smoothScrollY, [0, 300], ['95%', '92%']);
+  const maxWidth = useTransform(smoothScrollY, [0, 300], ['1400px', '1000px']);
+  const height = useTransform(smoothScrollY, [0, 300], [80, 60]);
   const backgroundColor = useTransform(
-    scrollY,
-    [0, 100],
+    smoothScrollY,
+    [0, 300],
     ['rgba(255, 255, 255, 0.6)', 'rgba(255, 255, 255, 0.9)']
   );
 
@@ -51,13 +61,6 @@ export default function LandingPage() {
       {/* Navbar */}
       <motion.nav
         initial={{ width: '95%', maxWidth: '1400px', y: 20, borderRadius: 50 }}
-        style={{
-          width,
-          maxWidth,
-          height,
-          y: 20,
-          borderRadius: 50,
-        }}
         style={{
           width,
           maxWidth,
