@@ -31,6 +31,7 @@ export default function LandingPage() {
   const width = useTransform(smoothScrollY, [0, 600], ['95%', '92%']);
   const maxWidth = useTransform(smoothScrollY, [0, 600], ['1400px', '1000px']);
   const height = useTransform(smoothScrollY, [0, 600], [80, 60]);
+  const y = useTransform(smoothScrollY, [0, 600], [20, 35]); // Move down slightly as we scroll
   // Removed backgroundColor transform to allow CSS dark mode classes to work
 
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -61,7 +62,7 @@ export default function LandingPage() {
           width,
           maxWidth,
           height,
-          y: 20,
+          y,
           borderRadius: 50,
         }}
         className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-[box-shadow,background-color,border-color] duration-500 overflow-hidden ${isScrolled ? 'bg-white/90 dark:bg-white/10 shadow-xl shadow-black/10 dark:shadow-none border-black/10 dark:border-white/10' : 'bg-white/70 dark:bg-white/5 border-black/10 dark:border-white/10 shadow-md shadow-black/5 dark:shadow-none'}`}
