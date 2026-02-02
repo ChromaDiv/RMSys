@@ -52,7 +52,7 @@ export default function LandingPage() {
           borderRadius: 50,
         }}
         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-        className={`fixed z-[1000] left-0 right-0 mx-auto transition-colors duration-300 ${isScrolled ? 'bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/20 backdrop-blur-xl shadow-2xl shadow-indigo-500/10' : 'bg-white/50 dark:bg-white/5 border border-white/10 backdrop-blur-md'}`}
+        className={`fixed z-[1000] left-0 right-0 mx-auto transition-all duration-300 ${isScrolled ? 'bg-white/90 dark:bg-white/10 border border-gray-200 dark:border-white/20 backdrop-blur-xl shadow-2xl shadow-indigo-500/10' : 'bg-white/70 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 backdrop-blur-lg shadow-lg shadow-gray-200/50 dark:shadow-none'}`}
       >
         <div className="w-full mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
