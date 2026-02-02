@@ -25,7 +25,7 @@ const DemoSignupModal = ({ isOpen, onClose }) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
             >
-              <div className="glass-card rounded-3xl overflow-hidden shadow-2xl relative bg-white dark:bg-[#0f0f11] border border-white/20 dark:border-white/10">
+              <div className="rounded-3xl overflow-hidden shadow-2xl relative bg-white dark:bg-[#0f0f11] border border-gray-300 dark:border-white/10">
 
                 {/* Decorative Background */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />

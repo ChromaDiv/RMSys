@@ -21,8 +21,8 @@ const Modal = ({ isOpen, onClose, title, children }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
           >
-            <div className="glass-card rounded-2xl overflow-hidden shadow-2xl">
-              <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-white/5">
+            <div className="rounded-3xl overflow-hidden shadow-2xl bg-white dark:bg-[#111] border border-gray-300 dark:border-white/10">
+              <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-white/10">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
                 <button
                   className="p-2 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
