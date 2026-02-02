@@ -50,10 +50,9 @@ export default function LandingPage() {
           maxWidth: isScrolled ? '1000px' : '1200px',
           y: isScrolled ? 20 : 20, // Keep Y stable or move very slightly
           borderRadius: 50,
-          backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.6)',
         }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
-        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl ${isScrolled ? 'shadow-xl shadow-indigo-500/10 dark:shadow-none border-gray-200 dark:border-white/10' : 'border-white/10'}`}
+        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-all duration-300 ${isScrolled ? 'bg-white/90 dark:bg-white/10 shadow-xl shadow-indigo-500/10 dark:shadow-none border-gray-200 dark:border-white/10' : 'bg-white/60 dark:bg-white/5 border-white/10'}`}
       >
         <div className="w-full mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
