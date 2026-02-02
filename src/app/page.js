@@ -48,13 +48,14 @@ export default function LandingPage() {
         animate={{
           width: isScrolled ? '92%' : '90%',
           maxWidth: isScrolled ? '1000px' : '1200px',
-          y: isScrolled ? 20 : 20, // Keep Y stable or move very slightly
+          height: isScrolled ? 60 : 80, // Shrink vertically
+          y: isScrolled ? 20 : 20,
           borderRadius: 50,
         }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
-        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-all duration-300 ${isScrolled ? 'bg-white/90 dark:bg-white/10 shadow-xl shadow-black/5 dark:shadow-none border-black/10 dark:border-white/10' : 'bg-white/60 dark:bg-white/5 border-black/5 dark:border-white/10 shadow-sm shadow-black/5 dark:shadow-none'}`}
+        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-all duration-300 overflow-hidden ${isScrolled ? 'bg-white/90 dark:bg-white/10 shadow-xl shadow-black/5 dark:shadow-none border-black/10 dark:border-white/10' : 'bg-white/60 dark:bg-white/5 border-black/5 dark:border-white/10 shadow-sm shadow-black/5 dark:shadow-none'}`}
       >
-        <div className="w-full mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="w-full mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
