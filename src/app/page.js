@@ -71,7 +71,7 @@ export default function LandingPage() {
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <span className="text-2xl font-bold tracking-tight">RMSys</span>
+            <span className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-white dark:to-white">RMSys</span>
           </div>
           <div className="flex items-center gap-1.5 md:gap-6">
             <button
