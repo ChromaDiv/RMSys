@@ -34,12 +34,12 @@ const SidebarContent = ({
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
-      <AnimatePresence>
+      <AnimatePresence mode='wait'>
         {isSidebarOpen && (
           <motion.h1
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
+            exit={{ opacity: 0, x: -5, transition: { duration: 0.1 } }}
             className="text-2xl font-black whitespace-nowrap overflow-hidden tracking-tight"
           >
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-white dark:to-indigo-300">{t('common.rmsTitle')}</span>
@@ -79,12 +79,12 @@ const SidebarContent = ({
 
             <Icon size={24} className={clsx("relative z-10 transition-transform duration-300 shrink-0", isActive && "scale-110 text-indigo-700 dark:text-indigo-300")} />
 
-            <AnimatePresence>
+            <AnimatePresence mode='wait'>
               {isSidebarOpen && (
                 <motion.span
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
+                  exit={{ opacity: 0, x: -5, transition: { duration: 0 } }}
                   className="relative z-10 font-medium whitespace-nowrap"
                 >
                   {item.name}
@@ -97,12 +97,12 @@ const SidebarContent = ({
     </nav>
 
     <div className="mt-auto mb-2 pt-2">
-      <AnimatePresence>
+      <AnimatePresence mode='wait'>
         <motion.button
           layout
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
+          exit={{ opacity: 0, scale: 0.8, transition: { duration: 0 } }}
           onClick={handleExitOrLogout}
           className={clsx(
             "flex items-center gap-3 rounded-full transition-all duration-300 w-full hover:bg-red-500/10 hover:text-red-500 text-red-400 font-medium group",
@@ -114,6 +114,7 @@ const SidebarContent = ({
             <motion.span
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -5, transition: { duration: 0 } }}
               className="relative z-10 font-medium whitespace-nowrap"
             >
               {isDemo ? t('nav.exitDemo') : t('nav.logout')}
@@ -128,12 +129,12 @@ const SidebarContent = ({
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shrink-0 uppercase">
           {userName.charAt(0)}
         </div>
-        <AnimatePresence>
+        <AnimatePresence mode='wait'>
           {isSidebarOpen && (
             <motion.div
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
+              exit={{ opacity: 0, width: 0, transition: { duration: 0 } }}
               className="flex flex-col whitespace-nowrap overflow-hidden"
             >
               <span className="text-sm font-semibold text-gray-900 dark:text-white capitalize">
