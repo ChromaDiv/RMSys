@@ -109,7 +109,7 @@ body:not(.dark)::before {
     radial-gradient(circle at 85% 30%, rgba(255, 118, 117, 0.12), transparent 50%),
     radial-gradient(circle at 50% 80%, rgba(9, 132, 227, 0.12), transparent 50%);
   filter: blur(60px);
-  animation: blob 25s infinite alternate;
+  animation: blob 12s infinite alternate;
 }
 
 body:not(.dark)::after {
@@ -117,7 +117,7 @@ body:not(.dark)::after {
     radial-gradient(circle at 80% 80%, rgba(253, 203, 110, 0.15), transparent 40%),
     radial-gradient(circle at 20% 20%, rgba(162, 155, 254, 0.15), transparent 40%);
   filter: blur(80px);
-  animation: blob 30s infinite alternate-reverse;
+  animation: blob 15s infinite alternate-reverse;
 }
 
 /* Dark Mode Gradients (Subtle Aurora) */
