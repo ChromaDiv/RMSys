@@ -49,7 +49,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen text-foreground selection:bg-indigo-500/30" style={{ background: 'var(--background)' }}>
+    <div className="min-h-screen text-foreground selection:bg-indigo-500/30">
 
       {/* Navbar */}
       {/* Navbar */}

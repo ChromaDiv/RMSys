@@ -15,7 +15,7 @@ export default function MainContentWrapper({ children }) {
   const isPublic = ['/', '/login', '/signup'].includes(normalizedPath);
 
   if (isPublic) {
-    return <main className="flex-1 min-h-screen bg-white dark:bg-black">{children}</main>;
+    return <main className="flex-1 min-h-screen bg-transparent">{children}</main>;
   }
 
   return (
