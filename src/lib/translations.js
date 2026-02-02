@@ -376,6 +376,7 @@ export const translations = {
         tokenExpired: 'Your verification link has expired. Please sign up again.',
         invalidToken: 'Invalid verification link.',
         emailVerified: 'Email verified successfully! You can now sign in.',
+        invalidCredentials: 'Invalid email or password.',
       }
     },
   },
@@ -698,6 +699,7 @@ export const translations = {
         tokenExpired: 'انتهت صلاحية رابط التحقق الخاص بك. يرجى التسجيل مرة أخرى.',
         invalidToken: 'رابط التحقق غير صالح.',
         emailVerified: 'تم التحقق من البريد الإلكتروني بنجاح! يمكنك الآن تسجيل الدخول.',
+        invalidCredentials: 'البريد الإلكتروني أو كلمة المرور غير صالحة.',
       }
     },
     data: {
