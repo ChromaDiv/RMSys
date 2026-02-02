@@ -122,7 +122,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
           >
-            <div className="glass-card rounded-3xl overflow-hidden shadow-2xl bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 relative">
+            <div className="rounded-3xl overflow-hidden shadow-2xl bg-white dark:bg-[#111] border border-gray-300 dark:border-white/10 relative">
 
               {/* Close Button */}
               <button
