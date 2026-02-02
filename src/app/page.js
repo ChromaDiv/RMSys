@@ -19,7 +19,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 10); // Start animating almost immediately
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -52,7 +52,7 @@ export default function LandingPage() {
           y: isScrolled ? 20 : 20,
           borderRadius: 50,
         }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-all duration-700 overflow-hidden ${isScrolled ? 'bg-white/90 dark:bg-white/10 shadow-xl shadow-black/5 dark:shadow-none border-black/10 dark:border-white/10' : 'bg-white/60 dark:bg-white/5 border-black/5 dark:border-white/10 shadow-sm shadow-black/5 dark:shadow-none'}`}
       >
         <div className="w-full mx-auto px-6 h-full flex items-center justify-between">
