@@ -20,18 +20,18 @@ export default function LandingPage() {
   const { scrollY } = useScroll();
   // Ultra-smooth physics settings: Higher mass = more inertia, Lower stiffness = softer spring
   const smoothScrollY = useSpring(scrollY, {
-    mass: 0.5,
-    stiffness: 70,
+    mass: 1.0,
+    stiffness: 50,
     damping: 20,
     restDelta: 0.001
   });
 
   // Map the smoothed scroll value to animation properties
-  // Extended range [0, 600] makes the animation feel "ultra slow" and gradual
-  const width = useTransform(smoothScrollY, [0, 600], ['95%', '92%']);
-  const maxWidth = useTransform(smoothScrollY, [0, 600], ['1400px', '1000px']);
-  const height = useTransform(smoothScrollY, [0, 600], [80, 60]);
-  const y = useTransform(smoothScrollY, [0, 600], [20, 35]); // Move down slightly as we scroll
+  // Extended range [0, 1200] makes the animation feel "extremely slow" and gradual
+  const width = useTransform(smoothScrollY, [0, 1200], ['95%', '92%']);
+  const maxWidth = useTransform(smoothScrollY, [0, 1200], ['1400px', '1000px']);
+  const height = useTransform(smoothScrollY, [0, 1200], [80, 60]);
+  const y = useTransform(smoothScrollY, [0, 1200], [20, 35]); // Move down slightly as we scroll
   // Removed backgroundColor transform to allow CSS dark mode classes to work
 
   useMotionValueEvent(scrollY, "change", (latest) => {
