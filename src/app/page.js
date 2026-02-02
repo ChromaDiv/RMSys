@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
+import { motion, useScroll, useTransform, useMotionValueEvent, useSpring } from 'framer-motion';
 import { ArrowRight, CheckCircle, BarChart3, Truck, Users, ChevronRight } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
 import { useLanguage } from '@/context/LanguageContext';
@@ -58,7 +58,15 @@ export default function LandingPage() {
           y: 20,
           borderRadius: 50,
         }}
-        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-[box-shadow,background-color,border-color] duration-300 overflow-hidden ${isScrolled ? 'bg-white/90 dark:bg-white/10 shadow-xl shadow-black/5 dark:shadow-none border-black/10 dark:border-white/10' : 'bg-white/60 dark:bg-white/5 border-black/5 dark:border-white/10 shadow-sm shadow-black/5 dark:shadow-none'}`}
+        style={{
+          width,
+          maxWidth,
+          height,
+          backgroundColor, // Explicitly use the transformed smooth color
+          y: 20,
+          borderRadius: 50,
+        }}
+        className={`fixed z-[1000] left-0 right-0 mx-auto border border-transparent backdrop-blur-xl transition-[box-shadow,border-color] duration-700 overflow-hidden ${isScrolled ? 'shadow-xl shadow-black/5 dark:shadow-none border-black/10 dark:border-white/10' : 'border-black/5 dark:border-white/10 shadow-sm shadow-black/5 dark:shadow-none'}`}
       >
         <div className="w-full mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
