@@ -97,19 +97,18 @@ const SidebarContent = ({
     </nav>
 
     <div className="mt-auto mb-2 pt-2">
-      <AnimatePresence mode='wait'>
-        <motion.button
-          layout
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8, transition: { duration: 0 } }}
-          onClick={handleExitOrLogout}
-          className={clsx(
-            "flex items-center gap-3 rounded-full transition-all duration-300 w-full hover:bg-red-500/10 hover:text-red-500 text-red-400 font-medium group",
-            isSidebarOpen ? "px-4 py-3" : "justify-center p-3 aspect-square"
-          )}
-        >
-          <LogOut size={24} className="shrink-0 transition-transform group-hover:scale-110" />
+      <motion.button
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8, transition: { duration: 0 } }}
+        onClick={handleExitOrLogout}
+        className={clsx(
+          "flex items-center gap-3 rounded-full transition-all duration-300 w-full hover:bg-red-500/10 hover:text-red-500 text-red-400 font-medium group",
+          isSidebarOpen ? "px-4 py-3" : "justify-center p-3 aspect-square"
+        )}
+      >
+        <LogOut size={24} className="shrink-0 transition-transform group-hover:scale-110" />
+        <AnimatePresence mode='wait'>
           {isSidebarOpen && (
             <motion.span
               initial={{ opacity: 0, x: -10 }}
@@ -120,8 +119,8 @@ const SidebarContent = ({
               {isDemo ? t('nav.exitDemo') : t('nav.logout')}
             </motion.span>
           )}
-        </motion.button>
-      </AnimatePresence>
+        </AnimatePresence>
+      </motion.button>
     </div>
 
     <div className="pt-4 border-t border-white/10">
