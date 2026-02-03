@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@variant dark (&:where(.dark, .dark *));
+
 
 @theme {
   --color-primary: #6c5ce7;
@@ -23,11 +23,12 @@
 
 }
 
+@variant dark (&:where(.dark, .dark *));
+
 :root {
-  /* Modern Subtle Gradient for Light Mode - Slightly richer for visibility */
+  /* Modern Subtle Gradient for Light Mode (Default) */
   --background: radial-gradient(circle at 50% 0%, #ffffff, #f0f4f8, #e2e8f0);
   --foreground: #2d2d2d;
-  /* Softened from #1d1d1f */
 
   /* Premium Apple-like Light Glass */
   --glass-bg: rgba(255, 255, 255, 0.65);
@@ -36,12 +37,44 @@
     0 4px 6px -1px rgba(0, 0, 0, 0.02),
     0 10px 15px -3px rgba(0, 0, 0, 0.04),
     inset 0 0 20px rgba(255, 255, 255, 0.5);
-  /* Inner glow */
+
+  /* Background Blobs - Light Mode Defaults */
+  --blob-before: radial-gradient(circle at 15% 50%, rgba(108, 92, 231, 0.15), transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(255, 118, 117, 0.12), transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(9, 132, 227, 0.12), transparent 50%);
+  --blob-after: radial-gradient(circle at 80% 80%, rgba(253, 203, 110, 0.15), transparent 40%),
+    radial-gradient(circle at 20% 20%, rgba(162, 155, 254, 0.15), transparent 40%);
+
+  --blob-filter-before: blur(60px);
+  --blob-filter-after: blur(80px);
 }
 
-.dark {
+/* Light Mode Overrides (Manual Class) */
+:root.light,
+html.light {
+  color-scheme: light;
+  --background: radial-gradient(circle at 50% 0%, #ffffff, #f0f4f8, #e2e8f0);
+  --foreground: #2d2d2d;
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.02),
+    0 10px 15px -3px rgba(0, 0, 0, 0.04),
+    inset 0 0 20px rgba(255, 255, 255, 0.5);
+  --blob-before: radial-gradient(circle at 15% 50%, rgba(108, 92, 231, 0.15), transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(255, 118, 117, 0.12), transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(9, 132, 227, 0.12), transparent 50%);
+  --blob-after: radial-gradient(circle at 80% 80%, rgba(253, 203, 110, 0.15), transparent 40%),
+    radial-gradient(circle at 20% 20%, rgba(162, 155, 254, 0.15), transparent 40%);
+}
+
+/* Dark Mode Class Override */
+/* Dark Mode Class Override */
+:root.dark,
+html.dark {
+  color-scheme: dark;
   /* Deep Modern Gradient for Dark Mode - Richer spotlight */
-  --background: radial-gradient(circle at 50% 0%, #2a2a2e, #1a1a1c, #000000);
+  --background: radial-gradient(circle at 50% 0%, #151518, #0a0a0c, #000000);
   --foreground: #f5f5f7;
 
   /* Premium Dark Glass */
@@ -51,15 +84,32 @@
     0 10px 40px -10px rgba(0, 0, 0, 0.5),
     inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   /* Subtle inner rim */
+
+  /* Background Blobs - Dark Mode Overrides */
+  --blob-before: radial-gradient(circle at 50% 0%, rgba(108, 92, 231, 0.15), transparent 60%),
+    radial-gradient(circle at 0% 100%, rgba(162, 155, 254, 0.05), transparent 50%);
+  --blob-after: none;
+  --blob-filter-before: blur(80px);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --background: #000000;
+
+    /* Dark Mode Redundancy - Optional if system fails to default */
+    /* Ensure Deep Modern Gradient stays if overwritten */
+    --background: radial-gradient(circle at 50% 0%, #151518, #0a0a0c, #000000);
     --foreground: #f5f5f7;
-    --glass-bg: rgba(28, 28, 30, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.1);
   }
+}
+
+
+
+/* 
+  Safari Fix: Ensure html gets background to prevent white overscroll/bleed 
+*/
+html {
+  color-scheme: light dark;
+  background-color: var(--background);
 }
 
 body {
@@ -72,9 +122,10 @@ body {
 }
 
 /* 
-  PREMIUM ANIMATED BACKGROUND (Light Mode) 
+  PREMIUM ANIMATED BACKGROUND
   Uses pseudo-elements to create moving color blobs 
   that blend together for a mesh gradient effect.
+  Now controlled via CSS variables for robust theme switching.
 */
 body::before,
 body::after {
@@ -86,30 +137,18 @@ body::after {
   height: 100vh;
   z-index: -1;
   pointer-events: none;
+  /* Safari Optimizations */
+  /* will-change and transform removed to prevent texture caching */
 }
 
-/* Light Mode Gradients */
-body:not(.dark)::before {
-  background:
-    radial-gradient(circle at 15% 50%, rgba(108, 92, 231, 0.15), transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(255, 118, 117, 0.12), transparent 50%),
-    radial-gradient(circle at 50% 80%, rgba(9, 132, 227, 0.12), transparent 50%);
-  filter: blur(60px);
+body::before {
+  background: var(--blob-before);
+  filter: var(--blob-filter-before);
 }
 
-body:not(.dark)::after {
-  background:
-    radial-gradient(circle at 80% 80%, rgba(253, 203, 110, 0.15), transparent 40%),
-    radial-gradient(circle at 20% 20%, rgba(162, 155, 254, 0.15), transparent 40%);
-  filter: blur(80px);
-}
-
-/* Dark Mode Gradients (Subtle Aurora) */
-.dark body::before {
-  background:
-    radial-gradient(circle at 50% 0%, rgba(108, 92, 231, 0.15), transparent 60%),
-    radial-gradient(circle at 0% 100%, rgba(162, 155, 254, 0.05), transparent 50%);
-  filter: blur(80px);
+body::after {
+  background: var(--blob-after);
+  filter: var(--blob-filter-after);
 }
 
 /* Custom Utilities */
@@ -123,11 +162,15 @@ body:not(.dark)::after {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
-  border: 1px solid var(--glass-border);
+/* Glass Overrides for Dark Mode */
+.dark .glass-card {
+  background: rgba(28, 28, 30, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass-panel {
+  background: rgba(28, 28, 30, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Animations */

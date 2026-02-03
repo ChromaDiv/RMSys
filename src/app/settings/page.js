@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { motion } from 'framer-motion';
-import { Moon, Sun, User, Bell, Shield, ChevronRight, LogOut, CreditCard, Lock, Mail, CreditCard as CardIcon, Settings as SettingsIcon, DollarSign, Languages } from 'lucide-react';
+import { Moon, Sun, User, Bell, Shield, ChevronRight, LogOut, CreditCard, Lock, Mail, CreditCard as CardIcon, Settings as SettingsIcon, DollarSign, Languages, Monitor } from 'lucide-react';
 import Modal from '@/components/Modal';
 import { signOut } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -18,7 +18,7 @@ import { useDemo } from '@/context/DemoContext';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, themeMode, setMode } = useTheme();
   const { currency, setCurrency, currencies } = useCurrency();
   const { language, setLanguage, t } = useLanguage();
   const { isDemo } = useDemo();
@@ -105,16 +105,25 @@ export default function SettingsPage() {
           action: (
             <div className="flex bg-gray-100 dark:bg-white/10 rounded-full p-1 border border-gray-200 dark:border-white/10">
               <button
-                onClick={() => theme === 'dark' && toggleTheme()}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${theme === 'light' ? 'bg-white shadow-sm text-amber-500' : 'text-gray-400'}`}
+                onClick={() => setMode('light')}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${themeMode === 'light' ? 'bg-white shadow-sm text-amber-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                title="Light Mode"
               >
-                <Sun size={16} fill={theme === 'light' ? "currentColor" : "none"} />
+                <Sun size={16} fill={themeMode === 'light' ? "currentColor" : "none"} />
               </button>
               <button
-                onClick={() => theme === 'light' && toggleTheme()}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${theme === 'dark' ? 'bg-gray-700 shadow-sm text-indigo-400' : 'text-gray-400'}`}
+                onClick={() => setMode('dark')}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${themeMode === 'dark' ? 'bg-gray-700 shadow-sm text-indigo-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                title="Dark Mode"
               >
-                <Moon size={16} fill={theme === 'dark' ? "currentColor" : "none"} />
+                <Moon size={16} fill={themeMode === 'dark' ? "currentColor" : "none"} />
+              </button>
+              <button
+                onClick={() => setMode('system')}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${themeMode === 'system' ? 'bg-gray-200 dark:bg-white/20 shadow-sm text-gray-900 dark:text-white' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+                title={t('common.systemDefault')}
+              >
+                <Monitor size={16} />
               </button>
             </div>
           )
@@ -174,7 +183,7 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto">
       {/* Header - Floating Glass Theme */}
       <motion.div
-        className="relative mb-8 px-6 py-6 md:px-10 md:py-8 rounded-3xl bg-white/70 dark:bg-black/50 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden"
+        className="glass-panel relative mb-8 px-6 py-6 md:px-10 md:py-8 rounded-3xl shadow-xl overflow-hidden"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >

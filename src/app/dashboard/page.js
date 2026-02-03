@@ -222,7 +222,7 @@ export default function Dashboard() {
     >
       {/* Header - Floating Glass Theme */}
       <motion.div
-        className="relative mb-8 px-6 py-6 md:px-10 md:py-8 rounded-3xl bg-white/70 dark:bg-black/50 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden"
+        className="glass-panel relative mb-8 px-6 py-6 md:px-10 md:py-8 rounded-3xl overflow-hidden shadow-xl"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >

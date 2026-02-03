@@ -54,7 +54,7 @@ export default function AIInsightsPage() {
       {/* Header - Floating Glass Theme */}
       <motion.div
         variants={itemVariants}
-        className="flex flex-row items-center justify-between gap-4 px-6 py-6 md:px-10 md:py-8 rounded-3xl bg-white/70 dark:bg-black/50 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden relative"
+        className="glass-panel flex flex-row items-center justify-between gap-4 px-6 py-6 md:px-10 md:py-8 rounded-3xl shadow-xl overflow-hidden relative"
       >
         <div className="relative z-10">
           <h1 className="text-2xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-gradient-x uppercase tracking-wider">

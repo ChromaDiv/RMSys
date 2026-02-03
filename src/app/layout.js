@@ -16,15 +16,44 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning={true}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const savedMode = localStorage.getItem('themeMode');
+                  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  
+                  let isDark;
+                  if (savedMode === 'dark') {
+                    isDark = true;
+                  } else if (savedMode === 'light') {
+                    isDark = false;
+                  } else {
+                    isDark = systemDark;
+                  }
+                  
+                  if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <SessionWrapper>
           <ThemeProvider>
             <LanguageProvider>
               <CurrencyProvider>
                 <DemoProvider>
                   <SidebarProvider>
-                    <div className="flex min-h-screen bg-background text-foreground">
+                    <div className="flex min-h-screen text-foreground">
                       <Sidebar />
                       <MainContentWrapper>
                         {children}

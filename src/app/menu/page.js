@@ -235,7 +235,7 @@ function MenuContent() {
     <div className="max-w-7xl mx-auto min-h-screen md:h-[calc(100vh-140px)] flex flex-col gap-6">
       {/* Header */}
       <motion.div
-        className="flex flex-row items-center justify-between gap-4 shrink-0 px-6 py-6 md:px-10 md:py-8 rounded-3xl bg-white/70 dark:bg-black/50 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden relative"
+        className="glass-panel flex flex-row items-center justify-between gap-4 shrink-0 px-6 py-6 md:px-10 md:py-8 rounded-3xl shadow-xl overflow-hidden relative"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >

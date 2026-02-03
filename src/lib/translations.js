@@ -28,6 +28,7 @@ export const translations = {
       or: 'OR',
       loggingOut: 'Logging out...',
       exitingDemo: 'Exiting Demo...',
+      systemDefault: 'System Default',
     },
     dashboard: {
       title: 'Dashboard',

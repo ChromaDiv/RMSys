@@ -301,7 +301,7 @@ export default function SupplyChainPage() {
       {/* Page Header */}
       {/* Page Header - Floating Glass Theme */}
       <motion.div
-        className="flex flex-row items-center justify-between gap-4 px-6 py-6 md:px-10 md:py-8 rounded-3xl bg-white/70 dark:bg-black/50 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-xl overflow-hidden relative"
+        className="glass-panel flex flex-row items-center justify-between gap-4 px-6 py-6 md:px-10 md:py-8 rounded-3xl shadow-xl overflow-hidden relative"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
