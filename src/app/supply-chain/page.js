@@ -667,11 +667,11 @@ export default function SupplyChainPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.quantity')}</label>
-                  <input type="number" value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: e.target.value })} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium" placeholder="0" required />
+                  <input type="number" min="0" onKeyDown={(e) => e.key === '-' && e.preventDefault()} value={newItem.quantity} onChange={e => setNewItem({ ...newItem, quantity: Math.max(0, parseFloat(e.target.value) || 0) })} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium" placeholder="0" required />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.minAmount')}</label>
-                  <input type="number" value={newItem.min_threshold} onChange={e => setNewItem({ ...newItem, min_threshold: e.target.value })} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium" placeholder="15" title="Alert when below this amount" />
+                  <input type="number" min="0" onKeyDown={(e) => e.key === '-' && e.preventDefault()} value={newItem.min_threshold} onChange={e => setNewItem({ ...newItem, min_threshold: Math.max(0, parseFloat(e.target.value) || 0) })} className="w-full p-4 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium" placeholder="15" title="Alert when below this amount" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.unit')}</label>
@@ -714,9 +714,10 @@ export default function SupplyChainPage() {
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('supplyChain.rating')}</label>
                   <input
-                    type="number" step="0.1" max="5"
+                    type="number" step="0.1" min="0" max="5"
+                    onKeyDown={(e) => e.key === '-' && e.preventDefault()}
                     value={newSupplier.rating}
-                    onChange={e => setNewSupplier({ ...newSupplier, rating: e.target.value })}
+                    onChange={e => setNewSupplier({ ...newSupplier, rating: Math.max(0, Math.min(5, parseFloat(e.target.value) || 0)) })}
                     className="w-full p-4 rounded-xl bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all font-medium"
                     placeholder="5.0"
                   />

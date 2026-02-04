@@ -8,6 +8,7 @@ import { ArrowRight, CheckCircle, BarChart3, Truck, Users, ChevronRight } from '
 import AuthModal from '@/components/AuthModal';
 import { useLanguage } from '@/context/LanguageContext';
 import { useDemo } from '@/context/DemoContext';
+import { useSession } from '@/context/AuthContext';
 
 export default function LandingPage() {
   const { language, setLanguage, t } = useLanguage();
@@ -15,6 +16,13 @@ export default function LandingPage() {
   const { setDemo } = useDemo();
   const [authOpen, setAuthOpen] = useState(false);
   const [authView, setAuthView] = useState('login');
+  const { session } = useSession();
+
+  useEffect(() => {
+    if (session) {
+      router.replace('/dashboard');
+    }
+  }, [session, router]);
 
   const { scrollY } = useScroll();
   // Ultra-responsive smoothing: Low mass = instant start, High damping = no bounce

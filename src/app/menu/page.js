@@ -494,8 +494,11 @@ function MenuContent() {
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('menu.price', 'Price')} (PKR)</label>
                 <input
                   type="number"
+                  min="0"
+                  step="0.01"
+                  onKeyDown={(e) => e.key === '-' && e.preventDefault()}
                   value={newItem.price}
-                  onChange={e => setNewItem({ ...newItem, price: e.target.value })}
+                  onChange={e => setNewItem({ ...newItem, price: Math.max(0, parseFloat(e.target.value) || 0) })}
                   className="w-full p-4 rounded-full bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 outline-none font-medium"
                   placeholder="0.00"
                   required

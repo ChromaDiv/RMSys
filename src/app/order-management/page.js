@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, Trash2, CheckCircle, Clock, Package, ChefHat, AlertCircle, Users, Activity, Heart, ShoppingBag, ClipboardList, MessageCircle, Phone } from 'lucide-react';
+import { Search, Plus, Trash2, CheckCircle, Clock, Package, ChefHat, AlertCircle, Users, Activity, Heart, ShoppingBag, ClipboardList, MessageCircle, Phone, ChevronDown, ChevronRight } from 'lucide-react';
 import Modal from '@/components/Modal';
 import DemoSignupModal from '@/components/DemoSignupModal';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -128,16 +128,18 @@ function OrderManagementContent() {
       if (order.phone) stats[order.customer].phone = order.phone;
 
       const orderItemsRaw = order.items || [];
-      const orderItems = Array.isArray(orderItemsRaw) ? orderItemsRaw : orderItemsRaw.split(',').map(i => i.trim());
+      const orderItems = Array.isArray(orderItemsRaw)
+        ? orderItemsRaw.map(i => (typeof i === 'object' && i !== null ? (i.name || 'Unknown Item') : i))
+        : orderItemsRaw.split(',').map(i => i.trim());
       stats[order.customer].items.push(...orderItems);
 
       // Pattern Logic
-      const orderTime = (order.time || '').toLowerCase();
+      const orderTime = String(order.time || '').toLowerCase();
       if (orderTime.includes('pm') || orderTime.includes('night')) {
         if (!stats[order.customer].patterns.includes('Late Night')) stats[order.customer].patterns.push('Late Night');
       }
 
-      if (orderItems.some(i => (i || '').toLowerCase().includes('deal') || (i || '').toLowerCase().includes('offer'))) {
+      if (orderItems.some(i => String(i || '').toLowerCase().includes('deal') || String(i || '').toLowerCase().includes('offer'))) {
         if (!stats[order.customer].patterns.includes('Deal Seeker')) stats[order.customer].patterns.push('Deal Seeker');
       }
     });
@@ -160,6 +162,55 @@ function OrderManagementContent() {
   }, [orders]);
   // --- CUSTOMER ANALYSIS END ---
 
+  // --- ORDER GROUPING START ---
+  const groupedOrders = useMemo(() => {
+    // 1. Sort orders by date (newest first)
+    const sorted = [...orders].sort((a, b) => {
+      const dA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return dB - dA;
+    });
+
+    // 2. Group by Month
+    const groups = [];
+    let currentGroup = null;
+
+    sorted.forEach(order => {
+      const date = order.createdAt ? new Date(order.createdAt) : new Date();
+      // Handle invalid dates gracefully
+      if (isNaN(date.getTime())) return;
+
+      const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+      if (!currentGroup || currentGroup.title !== monthYear) {
+        currentGroup = { title: monthYear, orders: [] };
+        groups.push(currentGroup);
+      }
+      currentGroup.orders.push(order);
+    });
+
+    return groups;
+  }, [orders]);
+
+  // Collapsible State - Default all collapsed
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
+
+  const toggleGroup = (title) => {
+    const newExpanded = new Set(expandedGroups);
+    if (newExpanded.has(title)) {
+      newExpanded.delete(title);
+    } else {
+      newExpanded.add(title);
+    }
+    setExpandedGroups(newExpanded);
+  };
+  // --- ORDER GROUPING END ---
+
+  // --- INSIGHTS VISIBILITY STATE ---
+  const [showAllInsights, setShowAllInsights] = useState(false);
+  const displayedInsights = showAllInsights ? customerStats : customerStats.slice(0, 12);
+  // --- INSIGHTS VISIBILITY END ---
+
   const handleAddOrder = async (e) => {
     e.preventDefault();
     setIsActionLoading(true);
@@ -177,6 +228,10 @@ function OrderManagementContent() {
     };
 
     setOrders([orderToAdd, ...orders]);
+
+    // Auto-expand the current month so the user sees the new order
+    const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    setExpandedGroups(prev => new Set(prev).add(currentMonth));
 
     try {
       if (!isDemo) {
@@ -282,7 +337,7 @@ function OrderManagementContent() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6" dir="ltr">
           <AnimatePresence>
-            {customerStats.map((customer, idx) => (
+            {displayedInsights.map((customer, idx) => (
               <motion.div
                 key={customer.name}
                 initial={{ opacity: 0, y: 20 }}
@@ -352,8 +407,20 @@ function OrderManagementContent() {
             ))}
           </AnimatePresence>
         </div>
+
+        {customerStats.length > 12 && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => setShowAllInsights(!showAllInsights)}
+              className="px-6 py-2.5 rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10 transition-all shadow-sm hover:shadow"
+            >
+              {showAllInsights ? 'Show Less' : `Show All (${customerStats.length})`}
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Main Orders List */}
       {/* Main Orders List */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 px-2">
@@ -363,89 +430,133 @@ function OrderManagementContent() {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('orders.liveGrid')}</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" dir="ltr">
-          <AnimatePresence>
-            {loading ? (
-              [1, 2, 3].map(i => (
-                <div key={i} className="glass-card p-6 rounded-2xl h-48 animate-pulse bg-gray-200/50 dark:bg-white/5" />
-              ))
-            ) : orders.map((order) => {
-              const StatusIcon = statusConfig[order.status]?.icon || Package;
-              return (
-                <motion.div
-                  key={order.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="glass-card p-6 rounded-3xl group hover:border-indigo-500/30 transition-all duration-300 relative overflow-hidden"
-                >
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-2xl ${statusConfig[order.status]?.bg || 'bg-gray-100'} ${statusConfig[order.status]?.color || 'text-gray-500'} shadow-inner`}>
-                        <StatusIcon size={22} />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900 dark:text-white leading-tight text-left" dir="ltr">{order.customer}</h3>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-400 font-bold mt-0.5">
-                          <Clock size={12} />
-                          <span>
-                            {order.time === 'Just now'
-                              ? t('dates.justNow')
-                              : (order.createdAt
-                                ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                : t('dates.unknown'))}
-                          </span>
-                          <span className="opacity-30">•</span>
-                          <span>#{order.id}</span>
-                        </div>
-                      </div>
-                    </div>
+        {groupedOrders.map((group, groupIdx) => {
+          const isExpanded = expandedGroups.has(group.title);
+          return (
+            <div key={group.title || groupIdx} className="space-y-4">
+              <button
+                onClick={() => toggleGroup(group.title)}
+                className="w-full sticky top-[88px] z-20 flex items-center justify-between gap-4 py-3 bg-gray-50/95 dark:bg-[#121212]/95 backdrop-blur-md -mx-4 px-6 md:mx-0 md:px-6 md:rounded-2xl transition-all border-b md:border border-gray-200/50 dark:border-white/5 shadow-sm hover:shadow-md group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2 rounded-lg transition-colors ${isExpanded ? 'bg-indigo-500 text-white' : 'bg-gray-200 dark:bg-white/10 text-gray-500'}`}>
+                    {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                   </div>
+                  <span className="text-sm font-black text-indigo-500 uppercase tracking-widest">{group.title}</span>
+                  <span className="text-xs font-bold px-2 py-1 bg-gray-200 dark:bg-white/10 rounded-full text-gray-600 dark:text-gray-300">
+                    {group.orders.length} Orders
+                  </span>
+                </div>
+                <div className="h-px flex-1 bg-indigo-500/10 hidden md:block mx-4" />
+              </button>
 
-                  <div className="mb-6 min-h-[50px]">
-                    <div className="flex flex-wrap gap-2">
-                      {(Array.isArray(order.items) ? order.items : (order.items?.split(',') || [])).map((item, idx) => (
-                        <span key={idx} className="text-[11px] px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-white/5 font-medium text-left" dir="ltr">
-                          {item}
-                        </span>
-                      ))}
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-2 pb-4" dir="ltr">
+                      <AnimatePresence mode="popLayout">
+                        {group.orders.map((order) => {
+                          const StatusIcon = statusConfig[order.status]?.icon || Package;
+                          return (
+                            <motion.div
+                              key={order.id}
+                              layout
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              className="glass-card p-6 rounded-3xl group hover:border-indigo-500/30 transition-all duration-300 relative overflow-hidden"
+                            >
+                              <div className="flex justify-between items-start mb-6">
+                                <div className="flex items-center gap-3">
+                                  <div className={`p-3 rounded-2xl ${statusConfig[order.status]?.bg || 'bg-gray-100'} ${statusConfig[order.status]?.color || 'text-gray-500'} shadow-inner`}>
+                                    <StatusIcon size={22} />
+                                  </div>
+                                  <div>
+                                    <h3 className="font-bold text-gray-900 dark:text-white leading-tight text-left" dir="ltr">{order.customer}</h3>
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-400 font-bold mt-0.5">
+                                      <Clock size={12} />
+                                      <span>
+                                        {order.time === 'Just now'
+                                          ? t('dates.justNow')
+                                          : (order.createdAt
+                                            ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                            : t('dates.unknown'))}
+                                      </span>
+                                      <span className="opacity-30">•</span>
+                                      <span>#{order.id}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="mb-6 min-h-[50px]">
+                                <div className="flex flex-wrap gap-2">
+                                  {(Array.isArray(order.items) ? order.items : (order.items?.split(',') || [])).map((item, idx) => {
+                                    const itemName = typeof item === 'object' && item !== null ? (item.name || 'Unnamed Item') : item;
+                                    const itemQty = typeof item === 'object' && item !== null && item.quantity ? `x${item.quantity}` : '';
+
+                                    return (
+                                      <span key={idx} className="text-[11px] px-2.5 py-1 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-white/5 font-medium text-left" dir="ltr">
+                                        {itemName} {itemQty}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div className="flex justify-between items-center pt-5 border-t border-gray-100 dark:border-white/5">
+                                <span className="font-black text-gray-900 dark:text-white text-2xl tracking-tighter">
+                                  {formatAmount(order.total)}
+                                </span>
+
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      if (isDemo) setShowDemoModal(true);
+                                      else handleCompleteOrder(order.id);
+                                    }}
+                                    className="p-2.5 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/20 rounded-xl transition-all shadow-sm"
+                                    title="Mark Delivered"
+                                  >
+                                    <CheckCircle size={22} />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (isDemo) setShowDemoModal(true);
+                                      else handleDeleteOrder(order.id);
+                                    }}
+                                    className="p-2.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/20 rounded-xl transition-all shadow-sm"
+                                    title="Cancel Order"
+                                  >
+                                    <Trash2 size={22} />
+                                  </button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
                     </div>
-                  </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
 
-                  <div className="flex justify-between items-center pt-5 border-t border-gray-100 dark:border-white/5">
-                    <span className="font-black text-gray-900 dark:text-white text-2xl tracking-tighter">
-                      {formatAmount(order.total)}
-                    </span>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          if (isDemo) setShowDemoModal(true);
-                          else handleCompleteOrder(order.id);
-                        }}
-                        className="p-2.5 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/20 rounded-xl transition-all shadow-sm"
-                        title="Mark Delivered"
-                      >
-                        <CheckCircle size={22} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (isDemo) setShowDemoModal(true);
-                          else handleDeleteOrder(order.id);
-                        }}
-                        className="p-2.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/20 rounded-xl transition-all shadow-sm"
-                        title="Cancel Order"
-                      >
-                        <Trash2 size={22} />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="glass-card p-6 rounded-2xl h-48 animate-pulse bg-gray-200/50 dark:bg-white/5" />
+            ))}
+          </div>
+        )}
       </div>
 
       <Modal
@@ -499,7 +610,7 @@ function OrderManagementContent() {
               </div>
               <div className="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1 border border-gray-100 dark:border-white/10 rounded-3xl bg-white dark:bg-black/10">
                 {menuItems
-                  .filter(item => item.name.toLowerCase().includes(itemSearchQuery.toLowerCase()))
+                  .filter(item => String(item.name || '').toLowerCase().includes(itemSearchQuery.toLowerCase()))
                   .map(item => {
                     const isSelected = newOrder.items && newOrder.items.includes(item.name);
                     return (
@@ -525,9 +636,12 @@ function OrderManagementContent() {
                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-1.5">{t('orders.totalAmount')}</label>
                 <input
                   type="number"
+                  min="0"
+                  step="0.01"
+                  onKeyDown={(e) => e.key === '-' && e.preventDefault()}
                   className="w-full p-4 rounded-3xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 outline-none transition-all font-bold"
                   value={newOrder.total}
-                  onChange={e => setNewOrder({ ...newOrder, total: e.target.value })}
+                  onChange={e => setNewOrder({ ...newOrder, total: Math.max(0, parseFloat(e.target.value) || 0) })}
                   placeholder="0.00"
                 />
               </div>

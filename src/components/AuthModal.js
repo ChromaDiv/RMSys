@@ -53,7 +53,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
 
         if (data.session) {
           router.push('/dashboard');
-          onClose();
+          // Don't close modal, let it unmount with page transition to prevent flash
         }
       } else {
         // Signup
@@ -72,7 +72,7 @@ export default function AuthModal({ isOpen, onClose, initialView = 'login' }) {
         if (data?.user) {
           if (data.session) {
             router.push('/dashboard');
-            onClose();
+            // Don't close modal, let it unmount with page transition
           } else {
             setSuccess('Account created! Please check your email if verification is enabled.');
             setEmail('');

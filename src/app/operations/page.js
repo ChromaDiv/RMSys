@@ -208,9 +208,12 @@ export default function OperationsPage() {
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">Total Amount ($)</label>
                 <input
                   type="number"
+                  min="0"
+                  step="0.01"
+                  onKeyDown={(e) => e.key === '-' && e.preventDefault()}
                   className="w-full p-3 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
                   value={newOrder.total}
-                  onChange={e => setNewOrder({ ...newOrder, total: e.target.value })}
+                  onChange={e => setNewOrder({ ...newOrder, total: Math.max(0, parseFloat(e.target.value) || 0) })}
                   placeholder="0.00"
                 />
               </div>

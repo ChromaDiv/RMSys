@@ -112,8 +112,12 @@ export default function Dashboard() {
       orders.forEach(order => {
         const items = Array.isArray(order.items) ? order.items : order.items.split(',');
         items.forEach(i => {
-          const cleanName = i.trim();
-          itemCounts[cleanName] = (itemCounts[cleanName] || 0) + 1;
+          // Handle both string items and object items (from new seed data)
+          const rawName = (typeof i === 'object' && i !== null) ? (i.name || 'Unknown') : i;
+          const cleanName = String(rawName || '').trim();
+          if (cleanName) {
+            itemCounts[cleanName] = (itemCounts[cleanName] || 0) + 1;
+          }
         });
       });
 
