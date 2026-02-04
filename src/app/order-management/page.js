@@ -130,7 +130,7 @@ function OrderManagementContent() {
       const orderItemsRaw = order.items || [];
       const orderItems = Array.isArray(orderItemsRaw)
         ? orderItemsRaw.map(i => (typeof i === 'object' && i !== null ? (i.name || 'Unknown Item') : i))
-        : orderItemsRaw.split(',').map(i => i.trim());
+        : orderItemsRaw.split(',').map(i => String(i || '').trim());
       stats[order.customer].items.push(...orderItems);
 
       // Pattern Logic
@@ -220,7 +220,7 @@ function OrderManagementContent() {
       id: tempId,
       customer: newOrder.customer,
       phone: newOrder.phone,
-      items: newOrder.items.split(',').map(i => i.trim()),
+      items: newOrder.items.split(',').map(i => String(i || '').trim()),
       total: parseFloat(newOrder.total),
       status: newOrder.status,
       time: 'Just now',

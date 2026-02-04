@@ -41,7 +41,7 @@ export default function OperationsPage() {
     const orderToAdd = {
       id: Math.floor(Math.random() * 1000) + 200,
       customer: newOrder.customer,
-      items: newOrder.items.split(',').map(i => i.trim()),
+      items: newOrder.items.split(',').map(i => String(i || '').trim()),
       total: parseFloat(newOrder.total),
       status: newOrder.status,
       time: 'Just now'
