@@ -36,16 +36,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showDemoModal, setShowDemoModal] = useState(false);
 
-  // Mock Graph Data for now (can be made dynamic later if needed)
-  const [graphData] = useState([
-    { name: 'Mon', sales: 12000 },
-    { name: 'Tue', sales: 15500 },
-    { name: 'Wed', sales: 11000 },
-    { name: 'Thu', sales: 18000 },
-    { name: 'Fri', sales: 24000 },
-    { name: 'Sat', sales: 32000 },
-    { name: 'Sun', sales: 28000 },
-  ]);
+  // Graph Data (Populated by processDashboardData)
+  const [graphData, setGraphData] = useState([]);
+  const [timeRange, setTimeRange] = useState('This Week');
 
   async function fetchData() {
     if (isDemo) {
@@ -91,7 +84,8 @@ export default function Dashboard() {
     if (rawOrders.length > 0 || rawInventory.length > 0) {
       processDashboardData(rawOrders, rawInventory, rawSuppliers);
     }
-  }, [rawOrders, rawInventory, rawSuppliers, t, formatAmount]);
+  }, [rawOrders, rawInventory, rawSuppliers, t, formatAmount, timeRange]);
+
 
   const processDashboardData = (orders, inventory, suppliers) => {
     try {
@@ -112,7 +106,7 @@ export default function Dashboard() {
       orders.forEach(order => {
         const items = Array.isArray(order.items) ? order.items : order.items.split(',');
         items.forEach(i => {
-          // Handle both string items and object items (from new seed data)
+          // Handle both string items and object items
           const rawName = (typeof i === 'object' && i !== null) ? (i.name || 'Unknown') : i;
           const cleanName = String(rawName || '').trim();
           if (cleanName) {
@@ -127,7 +121,7 @@ export default function Dashboard() {
         .map(([name, count]) => ({
           name: name,
           sold: count.toString(),
-          progress: Math.min(100, count * 10), // Arbitrary scale for progress bar
+          progress: Math.min(100, count * 10),
           color: ['bg-orange-500', 'bg-red-500', 'bg-yellow-500'][Math.floor(Math.random() * 3)]
         }));
 
@@ -140,10 +134,226 @@ export default function Dashboard() {
         { title: t('dashboard.lowStockItems'), value: lowStockCount.toString(), change: lowStockCount > 0 ? '-Alert' : 'OK', icon: AlertTriangle, color: '#ff7675' },
       ]);
 
-      // 6. Generate AI Suggestions
-      const suggestions = [];
+      // --- 6. REAL GRAPH DATA CALCULATION ---
+      let graphPoints = [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Normalize today for comparison
 
-      // Customer Outreach Suggestion
+      // Calculate Average Daily Revenue PER DAY OF WEEK
+      const revenueByDay = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }; // Sun=0, Mon=1...
+
+      // Aggregate historical data
+      const processedDates = new Set();
+      orders.forEach(o => {
+        if (!o.createdAt) return;
+        const dateStr = o.createdAt.split('T')[0];
+        // Only count each day once per aggregation loop to avoid skewing average with multiple orders per day
+        // Wait, we need total revenue per day.
+      });
+
+      // Better approach: Group total revenue by specific date first
+      const dailyTotals = {};
+      orders.forEach(o => {
+        if (!o.createdAt) return;
+        const dateStr = o.createdAt.split('T')[0];
+        dailyTotals[dateStr] = (dailyTotals[dateStr] || 0) + Number(o.total || 0);
+      });
+
+      // Now map distinct days to day-of-week buckets
+      Object.entries(dailyTotals).forEach(([dateStr, total]) => {
+        const d = new Date(dateStr);
+        const dayOfWeek = d.getDay();
+        revenueByDay[dayOfWeek].push(total);
+      });
+
+      // Calculate averages per day of week
+      const avgRevenueByDay = {};
+      let globalSum = 0;
+      let globalCount = 0;
+      for (let i = 0; i < 7; i++) {
+        const totals = revenueByDay[i];
+        if (totals.length > 0) {
+          const sum = totals.reduce((a, b) => a + b, 0);
+          avgRevenueByDay[i] = sum / totals.length;
+          globalSum += sum;
+          globalCount += totals.length;
+        } else {
+          avgRevenueByDay[i] = 0; // Will fallback to global average
+        }
+      }
+      const globalAverage = globalCount > 0 ? globalSum / globalCount : 100;
+
+      // Fill in zeros with global average to prevent zero-projection if no history for that specific day
+      for (let i = 0; i < 7; i++) {
+        if (avgRevenueByDay[i] === 0) avgRevenueByDay[i] = globalAverage;
+      }
+
+      // Helper for Local YYYY-MM-DD format to prevent UTC shifts
+      const toLocalISO = (date) => {
+        const offset = date.getTimezoneOffset() * 60000;
+        const local = new Date(date - offset);
+        return local.toISOString().split('T')[0]; // Safe local YYYY-MM-DD
+      };
+
+      const todayISO = toLocalISO(today);
+
+      if (timeRange === 'This Month') {
+        const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+        // Dynamic Forecast: Run Rate Logic
+        // Calculate Revenue So Far in Local Time
+        let monthRevenue = 0;
+        const currentMonthPrefix = toLocalISO(today).substring(0, 7); // "YYYY-MM"
+
+        orders.forEach(o => {
+          if (!o.createdAt) return;
+          // Use same local logic to check month ownership
+          const offset = new Date(o.createdAt).getTimezoneOffset() * 60000;
+          const localDate = new Date(new Date(o.createdAt) - offset).toISOString().split('T')[0];
+
+          if (localDate.startsWith(currentMonthPrefix)) {
+            monthRevenue += Number(o.total || 0);
+          }
+        });
+
+        const daysPassed = Math.max(1, today.getDate());
+        let runRate = monthRevenue / daysPassed;
+
+        // Fallback for very early in month: Blend with Global Average
+        if (daysPassed < 3) {
+          runRate = (runRate + globalAverage) / 2;
+        }
+
+        graphPoints = Array.from({ length: daysInMonth }, (_, i) => {
+          const d = new Date(today.getFullYear(), today.getMonth(), i + 1);
+          const dStr = toLocalISO(d);
+          const isFuture = d > new Date(); // Compare with NOW
+
+          const dayOfWeek = d.getDay();
+          const dayFactor = globalAverage > 0 ? (avgRevenueByDay[dayOfWeek] / globalAverage) : 1;
+          const seasonalForecast = runRate * dayFactor;
+
+          return {
+            date: dStr,
+            name: (i + 1).toString(),
+            sales: isFuture ? null : 0,
+            forecast: isFuture ? seasonalForecast : (dStr === todayISO ? 0 : null)
+          };
+        });
+      } else if (timeRange === 'Last 3 Months') {
+        for (let i = 11; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - (i * 7));
+          // Set to Monday
+          const day = d.getDay();
+          const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+          const monday = new Date(d.setDate(diff));
+
+          const isFuture = monday > new Date();
+          const predictedWeek = Object.values(avgRevenueByDay).reduce((a, b) => a + b, 0);
+
+          graphPoints.push({
+            date: toLocalISO(monday),
+            name: monday.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' }),
+            sales: isFuture ? null : 0,
+            forecast: isFuture ? predictedWeek : (i === 0 ? 0 : null),
+            endDate: toLocalISO(new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000))
+          });
+        }
+      } else if (timeRange === 'Last 6 Months') {
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+          graphPoints.push({
+            date: toLocalISO(d).substring(0, 7),
+            name: d.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { month: 'short' }),
+            sales: 0,
+            forecast: null
+          });
+        }
+      } else {
+        // This Week
+        const currentDay = today.getDay();
+        const diff = today.getDate() - currentDay + (currentDay == 0 ? -6 : 1);
+        const monday = new Date(today.setDate(diff));
+
+        graphPoints = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(monday);
+          d.setDate(monday.getDate() + i);
+          const dStr = toLocalISO(d);
+          const isFuture = d > new Date();
+
+          return {
+            date: dStr,
+            name: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()],
+            sales: isFuture ? null : 0,
+            forecast: isFuture ? (avgRevenueByDay[d.getDay()] || 0) : (dStr === todayISO ? 0 : null)
+          };
+        });
+      }
+
+      orders.forEach(order => {
+        if (!order.createdAt) return;
+
+        // Parse UTC timestamp and convert to Local ISO YYYY-MM-DD
+        const utcDate = new Date(order.createdAt);
+        // We use the same toLocalISO helper defined internally in previous block
+        // Wait, scope issue. Let's redefine or hoist helper if needed. 
+        // For simplicity, inline logic:
+        const offset = utcDate.getTimezoneOffset() * 60000;
+        const local = new Date(utcDate - offset); // Correct local date
+        const orderDate = local.toISOString().split('T')[0];
+
+        if (timeRange === 'Last 3 Months') {
+          // Find the week range
+          const point = graphPoints.find(p => orderDate >= p.date && orderDate <= p.endDate);
+          if (point) point.sales += Number(order.total || 0);
+
+        } else if (timeRange === 'Last 6 Months') {
+          // Match by YYYY-MM
+          const orderMonth = orderDate.substring(0, 7);
+          const point = graphPoints.find(p => p.date === orderMonth);
+          if (point) point.sales += Number(order.total || 0);
+
+        } else if (timeRange === 'This Month') {
+          // Strict daily match
+          const point = graphPoints.find(p => p.date === orderDate);
+          if (point) {
+            point.sales = (point.sales || 0) + Number(order.total || 0);
+            // Sync Forecast
+            // Sync Forecast
+            if (orderDate === todayISO) {
+              point.forecast = point.sales;
+            }
+          }
+        } else {
+          // This Week (Mon-Sun)
+          const point = graphPoints.find(d => d.date === orderDate);
+          if (point) {
+            point.sales = (point.sales || 0) + Number(order.total || 0);
+          }
+        }
+      });
+
+      // Post-process logic to ensure Today has both values for continuity
+      // Use the same Local ISO logic
+      const now = new Date();
+      const offset = now.getTimezoneOffset() * 60000;
+      const todayLocal = new Date(now - offset).toISOString().split('T')[0];
+
+      const todayPoint = graphPoints.find(p => p.date === todayLocal);
+
+      if (todayPoint) {
+        // Force forecast to match sales to close the "gap"
+        todayPoint.forecast = todayPoint.sales;
+      }
+
+
+
+      setGraphData(graphPoints.map(d => ({ name: d.name, sales: d.sales, forecast: d.forecast })));
+      // --- END GRAPH DATA ---
+
+      // 7. Generate AI Suggestions (Existing Logic)
+      const suggestions = [];
       const customerCounts = {};
       orders.forEach(o => customerCounts[o.customer] = (customerCounts[o.customer] || 0) + 1);
       const regularCustomers = Object.entries(customerCounts).filter(([_, count]) => count >= 2);
@@ -162,7 +372,6 @@ export default function Dashboard() {
         });
       }
 
-      // Supply Chain Suggestion
       const criticalItems = inventory.filter(i => i.status === 'Critical');
       if (criticalItems.length > 0) {
         suggestions.push({
@@ -190,7 +399,7 @@ export default function Dashboard() {
 
       setAiSuggestions(suggestions);
 
-      // 7. Supply Chain Strategic Metrics
+      // 8. Supply Chain Strategic Metrics
       const goodItems = inventory.filter(i => i.status === 'Good').length;
       const totalInventory = inventory.length;
       const health = totalInventory > 0 ? Math.round((goodItems / totalInventory) * 100) : 0;
@@ -299,14 +508,27 @@ export default function Dashboard() {
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">{t('dashboard.revenueOverview')}</h2>
-            <select className="bg-gray-100 dark:bg-white/5 border border-transparent dark:border-white/10 rounded-lg px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
-              <option>This Week</option>
-              <option>This Month</option>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="bg-gray-100 dark:bg-white/5 border border-transparent dark:border-white/10 rounded-lg px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="This Week">This Week</option>
+              <option value="This Month">This Month</option>
+              <option value="Last 3 Months">Last 3 Months</option>
+              <option value="Last 6 Months">Last 6 Months</option>
             </select>
           </div>
+
           <div className="w-full h-[250px] md:h-[300px] min-w-0 relative">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <AreaChart data={graphData.map(d => ({ ...d, name: t(`dates.${d.name.toLowerCase()}`) || d.name }))}>
+              <AreaChart data={graphData.map(d => ({
+                ...d,
+                // Only translate if it's a day name (Sun, Mon, etc.), otherwise show the number
+                name: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].includes(d.name)
+                  ? t(`dates.${d.name.toLowerCase()}`)
+                  : d.name
+              }))}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6c5ce7" stopOpacity={0.3} />
@@ -317,10 +539,11 @@ export default function Dashboard() {
                 <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => formatAmount(value, false)} />
                 <Tooltip
-                  formatter={(value) => [formatAmount(value), 'Sales']}
+                  formatter={(value, name) => [formatAmount(value), name === 'sales' ? t('dashboard.revenue') : t('dashboard.forecast')]}
                   contentStyle={{ backgroundColor: '#1a1a1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
                 />
-                <Area type="monotone" dataKey="sales" stroke="#6c5ce7" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" />
+                <Area type="monotone" dataKey="sales" stroke="#6c5ce7" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+                <Area type="monotone" dataKey="forecast" stroke="#a29bfe" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} fill="transparent" />
               </AreaChart>
             </ResponsiveContainer>
           </div>

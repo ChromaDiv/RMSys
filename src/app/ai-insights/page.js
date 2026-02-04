@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { motion } from 'framer-motion';
@@ -27,21 +27,44 @@ export default function AIInsightsPage() {
   const { formatAmount } = useCurrency();
   const { t } = useLanguage();
 
-  // Mock Predictive Data
-  const forecastData = [
-    { day: 'Mon', actual: 140000, predicted: 141000 },
-    { day: 'Tue', actual: 130000, predicted: 132000 },
-    { day: 'Wed', actual: 120000, predicted: 124000 },
-    { day: 'Thu', actual: 127800, predicted: 129000 },
-    { day: 'Fri', actual: 189000, predicted: 195000 },
-    { day: 'Sat', actual: 239000, predicted: 231000 },
-    { day: 'Sun', actual: 349000, predicted: 348000 },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [insights, setInsights] = useState(null);
+  const [timeRange, setTimeRange] = useState('month'); // 'month', '3m', '6m'
 
   // Simulator State
   const [priceAdjustment, setPriceAdjustment] = useState(0);
-  const baseRevenue = 1500000;
-  const projectedRev = baseRevenue * (1 + (priceAdjustment / 100) * 0.8); // Simple elasticity model
+  const baseRevenue = insights?.summary?.monthlyProjected || 1500000;
+  const projectedRev = baseRevenue * (1 + (priceAdjustment / 100) * 0.8);
+
+  useEffect(() => {
+    async function fetchInsights() {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/ai-insights?range=${timeRange}`, { cache: 'no-store' });
+        const json = await res.json();
+        if (json.success) {
+          setInsights(json.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch insights", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchInsights();
+  }, [timeRange]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto p-10 flex flex-col items-center justify-center min-h-[50vh] text-center">
+        <Sparkles size={48} className="text-indigo-500 animate-pulse mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Analyzing Data...</h2>
+        <p className="text-gray-500">Running pattern recognition on your sales history.</p>
+      </div>
+    );
+  }
+
+  const forecastData = insights?.forecast || [];
 
   return (
     <motion.div
@@ -50,7 +73,6 @@ export default function AIInsightsPage() {
       initial="hidden"
       animate="visible"
     >
-      {/* Header */}
       {/* Header - Floating Glass Theme */}
       <motion.div
         variants={itemVariants}
@@ -84,12 +106,23 @@ export default function AIInsightsPage() {
               <TrendingUp className="text-emerald-500" size={28} />
               {t('aiInsights.revenueForecast')}
             </h2>
-            <span className="text-sm font-bold text-emerald-500 bg-emerald-500/10 px-4 py-2 rounded-full uppercase tracking-wider">
-              +12% {t('aiInsights.projected')}
-            </span>
+            <div className="flex items-center gap-4">
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="bg-gray-100 dark:bg-white/5 border border-transparent dark:border-white/10 rounded-lg px-3 py-1 text-xs md:text-sm outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-gray-700 dark:text-gray-300"
+              >
+                <option value="month">{t('dashboard.thisMonth') || 'This Month'}</option>
+                <option value="3m">{t('dashboard.next3Months') || 'Next 3 Months'}</option>
+                <option value="6m">{t('dashboard.next6Months') || 'Next 6 Months'}</option>
+              </select>
+              <span className="text-sm font-bold text-emerald-500 bg-emerald-500/10 px-4 py-2 rounded-full uppercase tracking-wider hidden md:inline-block">
+                +12% {t('aiInsights.projected')}
+              </span>
+            </div>
           </div>
 
-          <div className="h-[350px] w-full min-w-0 relative">
+          <div className="h-[350px] w-full min-w-0 relative" key={timeRange}>
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={forecastData}>
                 <defs>
@@ -130,17 +163,21 @@ export default function AIInsightsPage() {
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-gray-900 dark:text-white">Zinger Burger</span>
-                  <span className="text-emerald-500 font-bold text-sm">+5% {t('aiInsights.projected')}</span>
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    {insights?.optimization?.elasticItem?.name || 'Zinger Burger'}
+                  </span>
+                  <span className="text-emerald-500 font-bold text-sm">+{insights?.optimization?.elasticItem?.potential || 5}% {t('aiInsights.projected')}</span>
                 </div>
                 <p className="text-sm text-gray-500 leading-relaxed">{t('data.suggestions.elasticity').replace('{amount}', formatAmount(12500))}</p>
               </div>
               <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-gray-900 dark:text-white">Cold Coffee</span>
+                  <span className="font-bold text-gray-900 dark:text-white">
+                    {insights?.optimization?.bundleCandidate?.name || 'Cold Coffee'}
+                  </span>
                   <span className="text-blue-500 font-bold text-sm">Bundle Suggested</span>
                 </div>
-                <p className="text-sm text-gray-500 leading-relaxed">{t('data.suggestions.bundle').replace('{item}', 'Club Sandwich')}</p>
+                <p className="text-sm text-gray-500 leading-relaxed">{t('data.suggestions.bundle').replace('{item}', insights?.optimization?.bundleCandidate?.partner || 'Club Sandwich')}</p>
               </div>
             </div>
 
@@ -177,17 +214,21 @@ export default function AIInsightsPage() {
             <div className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-500/10 flex items-center justify-center shrink-0">
-                  <span className="text-orange-600 font-bold">85%</span>
+                  <span className="text-orange-600 font-bold">{insights?.correlations?.topCombo?.score || 85}%</span>
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900 dark:text-white">{t('aiInsights.topComboPair')}</h4>
-                  <p className="text-sm text-gray-500">{t('data.suggestions.combo').replace('{item1}', 'Fajita Pizza').replace('{item2}', 'Small Coke')}</p>
+                  <p className="text-sm text-gray-500">
+                    {insights?.correlations?.topCombo
+                      ? `${insights.correlations.topCombo.pair.split(' + ').join(' & ')} frequently bought together`
+                      : t('data.suggestions.combo').replace('{item1}', 'Fajita Pizza').replace('{item2}', 'Small Coke')}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
-                  <span className="text-indigo-600 font-bold">12:00</span>
+                  <span className="text-indigo-600 font-bold">{insights?.correlations?.peakHour?.split(' - ')[0] || '12:00'}</span>
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900 dark:text-white">{t('aiInsights.peakHourLogic')}</h4>
@@ -206,7 +247,7 @@ export default function AIInsightsPage() {
           </motion.div>
         </div>
 
-        {/* Existing Critical Alerts Row */}
+        {/* Existing Critical Alerts Row (Using real stock data if available or static fallback) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <motion.div variants={itemVariants} className="glass-card p-8 rounded-3xl border-l-8 border-l-amber-500 relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300">
             <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -214,7 +255,9 @@ export default function AIInsightsPage() {
             </div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{t('aiInsights.stockAlert')}</h3>
             <p className="text-gray-600 dark:text-gray-300 text-base mb-6 leading-relaxed">
-              {t('data.suggestions.stockAlert')}
+              {insights?.alerts?.stock?.length > 0
+                ? `Critical Low Stock on: ${insights.alerts.stock.join(', ')}. Restock immediately to prevent revenue loss.`
+                : t('data.suggestions.stockAlert')}
             </p>
             <button className="px-5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 font-bold flex items-center gap-2 hover:gap-3 transition-all">
               {t('aiInsights.restockNow')} <ArrowRight size={18} />

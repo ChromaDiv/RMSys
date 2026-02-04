@@ -15,7 +15,7 @@ import SubscriptionModal from '@/components/SubscriptionModal';
 
 function OrderManagementContent() {
   const { formatAmount } = useCurrency();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { isDemo } = useDemo();
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState([]);
@@ -134,9 +134,13 @@ function OrderManagementContent() {
       stats[order.customer].items.push(...orderItems);
 
       // Pattern Logic
-      const orderTime = String(order.time || '').toLowerCase();
-      if (orderTime.includes('pm') || orderTime.includes('night')) {
-        if (!stats[order.customer].patterns.includes('Late Night')) stats[order.customer].patterns.push('Late Night');
+      const orderDate = order.createdAt ? new Date(order.createdAt) : null;
+      if (orderDate) {
+        const hour = orderDate.getHours();
+        // Late night: 10 PM (22:00) to 4 AM (04:00)
+        if (hour >= 22 || hour < 4) {
+          if (!stats[order.customer].patterns.includes('Late Night')) stats[order.customer].patterns.push('Late Night');
+        }
       }
 
       if (orderItems.some(i => String(i || '').toLowerCase().includes('deal') || String(i || '').toLowerCase().includes('offer'))) {
@@ -485,7 +489,7 @@ function OrderManagementContent() {
                                         {order.time === 'Just now'
                                           ? t('dates.justNow')
                                           : (order.createdAt
-                                            ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                            ? new Date(order.createdAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
                                             : t('dates.unknown'))}
                                       </span>
                                       <span className="opacity-30">•</span>
